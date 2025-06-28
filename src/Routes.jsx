@@ -1,4 +1,4 @@
-import React from "react";
+
 import { BrowserRouter, Routes as RouterRoutes, Route } from "react-router-dom";
 import ScrollToTop from "components/ScrollToTop";
 import ErrorBoundary from "components/ErrorBoundary";
@@ -9,6 +9,54 @@ import Signup from "pages/auth/Signup";
 import Dashboard from "pages/dashboard";
 import SubscriptionPage from "pages/subscription";
 import NotFound from "pages/NotFound";
+import React from "react";
+import { Navigate } from "react-router-dom";
+import { useAuth } from "contexts/AuthContext";
+
+// Component to protect auth routes (login/signup) from logged-in users
+export const AuthRoute = ({ children }) => {
+  const { user, loading } = useAuth();
+
+  // Show loading spinner while checking auth state
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  // If user is already logged in, redirect to home page
+  if (user) {
+    return <Navigate to="/" replace />;
+  }
+
+  // If not logged in, show the auth page (login/signup)
+  return children;
+};
+
+// Component to protect dashboard/subscription routes from non-logged-in users
+export const PrivateRoute = ({ children }) => {
+  const { user, loading } = useAuth();
+
+  // Show loading spinner while checking auth state
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  // If user is not logged in, redirect to login page
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // If logged in, show the protected page
+  return children;
+};
+
 
 const Routes = () => {
   return (
@@ -17,13 +65,47 @@ const Routes = () => {
         <ErrorBoundary>
           <ScrollToTop />
           <RouterRoutes>
-            {/* Define your routes here */}
+            {/* Public routes */}
             <Route path="/" element={<LandingPage />} />
             <Route path="/landing-page" element={<LandingPage />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/subscription" element={<SubscriptionPage />} />
+            
+            {/* Auth routes - redirect to home if already logged in */}
+            <Route
+              path="/login"
+              element={
+                <AuthRoute>
+                  <Login />
+                </AuthRoute>
+              }
+            />
+            <Route
+              path="/signup"
+              element={
+                <AuthRoute>
+                  <Signup />
+                </AuthRoute>
+              }
+            />
+            
+            {/* Protected routes - require authentication */}
+            <Route
+              path="/dashboard"
+              element={
+                <PrivateRoute>
+                  <Dashboard />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/subscription"
+              element={
+                <PrivateRoute>
+                  <SubscriptionPage />
+                </PrivateRoute>
+              }
+            />
+            
+            {/* Catch all route */}
             <Route path="*" element={<NotFound />} />
           </RouterRoutes>
         </ErrorBoundary>

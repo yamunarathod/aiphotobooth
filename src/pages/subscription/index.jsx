@@ -1,108 +1,135 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import Button from '../../components/ui/Button';
-import Icon from '../../components/AppIcon';
+"use client"
+
+import { useState } from "react"
+import { Link, useNavigate } from "react-router-dom"
+import { useAuth } from "../../contexts/AuthContext" // Import the AuthContext
+import Button from "../../components/ui/Button"
+import Icon from "../../components/AppIcon"
 
 const SubscriptionPage = () => {
-  const [eventSize, setEventSize] = useState(100);
-  const [billingCycle, setBillingCycle] = useState('monthly');
-  const [selectedPlan, setSelectedPlan] = useState('professional');
+  const navigate = useNavigate()
+  const [eventSize, setEventSize] = useState(100)
+  const [billingCycle, setBillingCycle] = useState("monthly")
+  const [selectedPlan, setSelectedPlan] = useState("professional")
+  
+  // Use AuthContext instead of local state
+  const { user, userProfile, signOut } = useAuth()
+
+  const handleLogout = async () => {
+    try {
+      await signOut()
+      navigate("/login")
+    } catch (error) {
+      console.error("Logout error:", error)
+      // Fallback navigation even if logout fails
+      navigate("/login")
+    }
+  }
 
   const plans = [
     {
-      id: 'starter',
-      name: 'Starter',
-      description: 'Perfect for small events and testing',
+      id: "starter",
+      name: "Starter",
+      description: "Perfect for small events and testing",
       monthlyPrice: 49,
       yearlyPrice: 39,
       transformsIncluded: 200,
       features: [
-        '200 AI transformations/month',
-        '12 art styles included',
-        'Basic customization',
-        'Email support',
-        'Social media sharing',
-        'HD quality exports',
-        'Mobile app access'
+        "200 AI transformations/month",
+        "12 art styles included",
+        "Basic customization",
+        "Email support",
+        "Social media sharing",
+        "HD quality exports",
+        "Mobile app access",
       ],
-      limitations: [
-        'No custom branding',
-        'Standard processing speed'
-      ],
+      limitations: ["No custom branding", "Standard processing speed"],
       popular: false,
-      color: 'blue'
+      color: "blue",
     },
     {
-      id: 'professional',
-      name: 'Professional',
-      description: 'Most popular for wedding & event planners',
+      id: "professional",
+      name: "Professional",
+      description: "Most popular for wedding & event planners",
       monthlyPrice: 149,
       yearlyPrice: 119,
       transformsIncluded: 1000,
       features: [
-        '1,000 AI transformations/month',
-        '24+ art styles included',
-        'Full brand customization',
-        'Priority support',
-        'Advanced sharing options',
-        '4K quality exports',
-        'Analytics dashboard',
-        'Custom style creation',
-        'Bulk processing'
+        "1,000 AI transformations/month",
+        "24+ art styles included",
+        "Full brand customization",
+        "Priority support",
+        "Advanced sharing options",
+        "4K quality exports",
+        "Analytics dashboard",
+        "Custom style creation",
+        "Bulk processing",
       ],
       limitations: [],
       popular: true,
-      color: 'violet'
+      color: "violet",
     },
     {
-      id: 'enterprise',
-      name: 'Enterprise',
-      description: 'Unlimited power for agencies & corporations',
+      id: "enterprise",
+      name: "Enterprise",
+      description: "Unlimited power for agencies & corporations",
       monthlyPrice: 399,
       yearlyPrice: 319,
-      transformsIncluded: 'unlimited',
+      transformsIncluded: "unlimited",
       features: [
-        'Unlimited AI transformations',
-        'All art styles + custom styles',
-        'White-label solution',
-        'Dedicated account manager',
-        'API access',
-        '8K quality exports',
-        'Advanced analytics',
-        'Multi-brand management',
-        'Priority processing',
-        'Custom integrations'
+        "Unlimited AI transformations",
+        "All art styles + custom styles",
+        "White-label solution",
+        "Dedicated account manager",
+        "API access",
+        "8K quality exports",
+        "Advanced analytics",
+        "Multi-brand management",
+        "Priority processing",
+        "Custom integrations",
       ],
       limitations: [],
       popular: false,
-      color: 'amber'
-    }
-  ];
+      color: "amber",
+    },
+  ]
 
   const calculatePrice = (plan) => {
-    const basePrice = billingCycle === 'monthly' ? plan.monthlyPrice : plan.yearlyPrice;
-    return basePrice;
-  };
+    const basePrice = billingCycle === "monthly" ? plan.monthlyPrice : plan.yearlyPrice
+    return basePrice
+  }
 
   const calculatePerPhoto = (plan) => {
-    if (plan.transformsIncluded === 'unlimited') return 0;
-    const price = calculatePrice(plan);
-    return (price / plan.transformsIncluded).toFixed(3);
-  };
+    if (plan.transformsIncluded === "unlimited") return 0
+    const price = calculatePrice(plan)
+    return (price / plan.transformsIncluded).toFixed(3)
+  }
 
   const getEventSizeMultiplier = () => {
-    if (eventSize <= 50) return 1;
-    if (eventSize <= 100) return 1.2;
-    if (eventSize <= 200) return 1.5;
-    if (eventSize <= 500) return 2;
-    return 3;
-  };
+    if (eventSize <= 50) return 1
+    if (eventSize <= 100) return 1.2
+    if (eventSize <= 200) return 1.5
+    if (eventSize <= 500) return 2
+    return 3
+  }
 
   const handleSelectPlan = (planId) => {
-    setSelectedPlan(planId);
+    setSelectedPlan(planId)
     // Here you would typically redirect to payment processor
-    alert(`Selected ${plans.find(p => p.id === planId)?.name} plan. Payment integration would go here.`);
-  };
+    alert(`Selected ${plans.find((p) => p.id === planId)?.name} plan. Payment integration would go here.`)
+  }
+
+  // Get display name from user data
+  const getUserDisplayName = () => {
+    if (userProfile?.name) return userProfile.name
+    if (user?.user_metadata?.name) return user.user_metadata.name
+    if (user?.email) return user.email.split('@')[0]
+    return "User"
+  }
+
+  const getUserEmail = () => {
+    return user?.email || ""
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0f0f23] to-[#1a1a2e]">
@@ -121,19 +148,37 @@ const SubscriptionPage = () => {
             </Link>
 
             <div className="flex items-center space-x-4">
-              <Link
-                to="/login"
-                className="text-slate-300 hover:text-white transition-colors"
-              >
-                Sign In
-              </Link>
-              <Button
-                variant="outline"
-                size="sm"
-                className="border-violet-400 text-violet-400"
-              >
-                Contact Sales
-              </Button>
+              {user ? (
+                // Logged in user menu
+                <div className="flex items-center space-x-4">
+                  <Link
+                    to="/dashboard"
+                    className="text-slate-300 hover:text-white transition-colors flex items-center gap-2"
+                  >
+                    <Icon name="LayoutDashboard" size={16} />
+                    Dashboard
+                  </Link>
+                  <div className="flex items-center space-x-3">
+                    <div className="text-right">
+                      <p className="text-sm text-white font-medium">{getUserDisplayName()}</p>
+                      <p className="text-xs text-slate-400">{getUserEmail()}</p>
+                    </div>
+                    <button onClick={handleLogout} className="text-slate-300 hover:text-white transition-colors">
+                      <Icon name="LogOut" size={16} />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                // Not logged in menu (this shouldn't show due to PrivateRoute protection)
+                <>
+                  <Link to="/login" className="text-slate-300 hover:text-white transition-colors">
+                    Sign In
+                  </Link>
+                  <Button variant="outline" size="sm" className="border-violet-400 text-violet-400 bg-transparent">
+                    Contact Sales
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -142,22 +187,18 @@ const SubscriptionPage = () => {
       <main className="py-20">
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-              Choose Your Perfect Plan
-            </h2>
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Choose Your Perfect Plan</h2>
             <p className="text-xl text-slate-300 max-w-3xl mx-auto">
-              Transform your events with AI-powered photo magic. All plans include unlimited support, 
-              regular updates, and a 30-day money-back guarantee.
+              Transform your events with AI-powered photo magic. All plans include unlimited support, regular updates,
+              and a 30-day money-back guarantee.
             </p>
           </div>
 
           {/* Event Size Slider */}
           <div className="max-w-2xl mx-auto mb-12">
             <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-2xl p-8 border border-slate-700/50">
-              <h3 className="text-xl font-semibold text-white mb-6 text-center">
-                Customize for Your Event Size
-              </h3>
-              
+              <h3 className="text-xl font-semibold text-white mb-6 text-center">Customize for Your Event Size</h3>
+
               <div className="mb-6">
                 <label className="block text-sm font-medium text-slate-300 mb-4">
                   Expected Guests: <span className="text-violet-400 font-bold">{eventSize}</span>
@@ -167,10 +208,10 @@ const SubscriptionPage = () => {
                   min="25"
                   max="1000"
                   value={eventSize}
-                  onChange={(e) => setEventSize(parseInt(e.target.value))}
+                  onChange={(e) => setEventSize(Number.parseInt(e.target.value))}
                   className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer slider"
                   style={{
-                    background: `linear-gradient(to right, #8b5cf6 0%, #8b5cf6 ${((eventSize - 25) / 975) * 100}%, #374151 ${((eventSize - 25) / 975) * 100}%, #374151 100%)`
+                    background: `linear-gradient(to right, #8b5cf6 0%, #8b5cf6 ${((eventSize - 25) / 975) * 100}%, #374151 ${((eventSize - 25) / 975) * 100}%, #374151 100%)`,
                   }}
                 />
                 <div className="flex justify-between text-xs text-slate-400 mt-2">
@@ -180,12 +221,9 @@ const SubscriptionPage = () => {
                   <span>1000+</span>
                 </div>
               </div>
-
               <div className="grid grid-cols-3 gap-4 text-center">
                 <div className="bg-slate-700/50 rounded-lg p-3">
-                  <div className="text-lg font-bold text-violet-400">
-                    {Math.round(eventSize * 0.8)}
-                  </div>
+                  <div className="text-lg font-bold text-violet-400">{Math.round(eventSize * 0.8)}</div>
                   <div className="text-xs text-slate-400">Expected Photos</div>
                 </div>
                 <div className="bg-slate-700/50 rounded-lg p-3">
@@ -208,17 +246,17 @@ const SubscriptionPage = () => {
           <div className="flex justify-center mb-12">
             <div className="bg-slate-800/50 rounded-lg p-1 border border-slate-600">
               <button
-                onClick={() => setBillingCycle('monthly')}
+                onClick={() => setBillingCycle("monthly")}
                 className={`px-6 py-2 rounded-md transition-all duration-300 ${
-                  billingCycle === 'monthly' ? 'bg-violet-500 text-white' : 'text-slate-400 hover:text-white'
+                  billingCycle === "monthly" ? "bg-violet-500 text-white" : "text-slate-400 hover:text-white"
                 }`}
               >
                 Monthly
               </button>
               <button
-                onClick={() => setBillingCycle('yearly')}
+                onClick={() => setBillingCycle("yearly")}
                 className={`px-6 py-2 rounded-md transition-all duration-300 relative ${
-                  billingCycle === 'yearly' ? 'bg-violet-500 text-white' : 'text-slate-400 hover:text-white'
+                  billingCycle === "yearly" ? "bg-violet-500 text-white" : "text-slate-400 hover:text-white"
                 }`}
               >
                 Yearly
@@ -236,10 +274,10 @@ const SubscriptionPage = () => {
                 key={plan.id}
                 className={`relative bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-2xl p-8 border transition-all duration-300 ${
                   plan.popular
-                    ? 'border-violet-500 scale-105 shadow-2xl shadow-violet-500/20'
+                    ? "border-violet-500 scale-105 shadow-2xl shadow-violet-500/20"
                     : selectedPlan === plan.id
-                    ? 'border-violet-500/50'
-                    : 'border-slate-700/50 hover:border-slate-600'
+                      ? "border-violet-500/50"
+                      : "border-slate-700/50 hover:border-slate-600"
                 }`}
                 onClick={() => setSelectedPlan(plan.id)}
               >
@@ -256,32 +294,26 @@ const SubscriptionPage = () => {
                 <div className="text-center mb-8">
                   <h3 className="text-2xl font-bold text-white mb-2">{plan.name}</h3>
                   <p className="text-slate-400 mb-6">{plan.description}</p>
-                  
+
                   <div className="mb-4">
-                    <span className="text-4xl font-bold text-white">
-                      ${calculatePrice(plan)}
-                    </span>
-                    <span className="text-slate-400 ml-2">
-                      /{billingCycle === 'monthly' ? 'month' : 'year'}
-                    </span>
+                    <span className="text-4xl font-bold text-white">${calculatePrice(plan)}</span>
+                    <span className="text-slate-400 ml-2">/{billingCycle === "monthly" ? "month" : "year"}</span>
                   </div>
 
-                  {billingCycle === 'yearly' && (
+                  {billingCycle === "yearly" && (
                     <div className="text-sm text-green-400 mb-4">
                       Save ${(plan.monthlyPrice - plan.yearlyPrice) * 12}/year
                     </div>
                   )}
 
                   <div className="text-sm text-slate-400">
-                    {plan.transformsIncluded === 'unlimited' ?'Unlimited transformations'
-                      : `${plan.transformsIncluded.toLocaleString()} transformations included`
-                    }
+                    {plan.transformsIncluded === "unlimited"
+                      ? "Unlimited transformations"
+                      : `${plan.transformsIncluded.toLocaleString()} transformations included`}
                   </div>
-                  
-                  {plan.transformsIncluded !== 'unlimited' && (
-                    <div className="text-xs text-slate-500">
-                      ${calculatePerPhoto(plan)} per photo
-                    </div>
+
+                  {plan.transformsIncluded !== "unlimited" && (
+                    <div className="text-xs text-slate-500">${calculatePerPhoto(plan)} per photo</div>
                   )}
                 </div>
 
@@ -318,17 +350,17 @@ const SubscriptionPage = () => {
                   variant={plan.popular ? "primary" : "outline"}
                   size="lg"
                   className={`w-full ${
-                    plan.popular 
-                      ? 'bg-gradient-to-r from-violet-500 to-purple-600' 
-                      : 'border-violet-400 text-violet-400 hover:bg-violet-500/10'
+                    plan.popular
+                      ? "bg-gradient-to-r from-violet-500 to-purple-600"
+                      : "border-violet-400 text-violet-400 hover:bg-violet-500/10"
                   }`}
-                  iconName={plan.id === 'enterprise' ? 'Phone' : 'CreditCard'}
+                  iconName={plan.id === "enterprise" ? "Phone" : "CreditCard"}
                   iconPosition="left"
                 >
-                  {plan.id === 'enterprise' ? 'Contact Sales' : 'Choose Plan'}
+                  {plan.id === "enterprise" ? "Contact Sales" : "Choose Plan"}
                 </Button>
 
-                {plan.id !== 'enterprise' && (
+                {plan.id !== "enterprise" && (
                   <p className="text-center text-xs text-slate-400 mt-3">
                     30-day money-back guarantee • Cancel anytime
                   </p>
@@ -361,7 +393,7 @@ const SubscriptionPage = () => {
         </div>
       </main>
     </div>
-  );
-};
+  )
+}
 
-export default SubscriptionPage;
+export default SubscriptionPage
