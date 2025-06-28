@@ -23,7 +23,7 @@ const Dashboard = () => {
   ];
 
   const recentActivity = [
-    { id: 1, event: 'Corporate Event - TechFlow', date: '2 hours ago', photos: 45, style: 'Digital Portrait' },
+    { id: 1, event: 'Corporate  Event - TechFlow', date: '2 hours ago', photos: 45, style: 'Digital Portrait' },
     { id: 2, event: 'Wedding - Sarah & John', date: '1 day ago', photos: 89, style: 'Watercolor Dream' },
     { id: 3, event: 'Birthday Party - Emma', date: '3 days ago', photos: 23, style: 'Pop Art Explosion' }
   ];
