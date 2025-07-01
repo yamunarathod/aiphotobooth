@@ -39,29 +39,29 @@ const LiveDemo = () => {
   const handleFileUpload = async (event) => {
     const file = event.target.files?.[0];
     setUploadError(null);
-    
+
     if (!file) return;
-    
+
     // Validate file type and size
     if (!file.type.startsWith('image/')) {
       setUploadError('Only image files are allowed (JPG, PNG)');
       return;
     }
-    
+
     if (file.size > 10 * 1024 * 1024) { // 10MB
       setUploadError('File size exceeds 10MB limit');
       return;
     }
-    
+
     const newUuid = uuidv4();
     setUuid(newUuid);
     const reader = new FileReader();
-    
+
     reader.onload = async (e) => {
       // Validate image dimensions
       const img = new window.Image();
       img.src = e.target.result.toString();
-      
+
       await new Promise((resolve) => {
         img.onload = () => {
           if (img.naturalWidth > 4096 || img.naturalHeight > 4096) {
@@ -74,7 +74,7 @@ const LiveDemo = () => {
       });
 
       if (uploadError) return;
-      
+
       console.log('Attempting Supabase upload:');
       console.log('File type:', file.type);
       console.log('File size:', file.size, 'bytes');
@@ -118,14 +118,14 @@ const LiveDemo = () => {
         setUploadError('Failed to upload image. Please try again.');
       }
     };
-    
+
     reader.readAsDataURL(file);
   };
 
   const handleSampleSelect = async (imageUrl) => {
     const newUuid = uuidv4();
     setUuid(newUuid);
-    
+
     try {
       // Insert record to inputimagetable with the sample image URL
       const { error: dbError } = await supabase
@@ -134,12 +134,12 @@ const LiveDemo = () => {
           unique_id: newUuid,
           image_url: imageUrl
         }]);
-  
+
       if (dbError) {
         console.error('Database error:', dbError);
         return;
       }
-  
+
       setUploadedImage(imageUrl);
       setProcessedImage(null);
     } catch (error) {
@@ -211,36 +211,23 @@ const LiveDemo = () => {
     }
   };
 
-  const downloadImage = () => {
+  const downloadImage = async () => {
     if (processedImage) {
-      const link = document.createElement('a');
-      link.href = processedImage;
-      link.download = `ai-transformed-${selectedStyle}.jpg`;
-      link.click();
-    }
-  };
+      try {
+        const response = await fetch(processedImage, { mode: 'cors' });
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
 
-  const shareImage = (platform) => {
-    if (!processedImage) return;
-    
-    const text = `Check out my AI-transformed photo using Magic Photobooth AI! #AIPhotobooth #MagicPhotobooth`;
-    const url = window.location.href;
-    
-    let shareUrl = '';
-    switch (platform) {
-      case 'twitter':
-        shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
-        break;
-      case 'facebook':
-        shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
-        break;
-      case 'linkedin':
-        shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`;
-        break;
-    }
-    
-    if (shareUrl) {
-      window.open(shareUrl, '_blank', 'width=600,height=400');
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `ai-transformed-${selectedStyle}.jpg`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      } catch (err) {
+        alert('Failed to download image.');
+      }
     }
   };
 
@@ -252,7 +239,7 @@ const LiveDemo = () => {
             Try It Live - Upload & Transform
           </h2>
           <p className="text-xl text-slate-300 max-w-3xl mx-auto">
-            Experience the magic firsthand. Upload your photo or choose from our samples 
+            Experience the magic firsthand. Upload your photo or choose from our samples
             and watch AI transform it in real-time.
           </p>
         </div>
@@ -265,19 +252,32 @@ const LiveDemo = () => {
 
               {/* Upload Area */}
               <div
-                className={`border-2 border-dashed rounded-xl p-8 text-center mb-6 transition-colors cursor-pointer ${
-                  uploadError ?
-                  'border-red-500 bg-red-900/20' :
-                  'border-slate-600 hover:border-violet-500'
-                }`}
+                className={`border-2 border-dashed rounded-xl p-0 text-center mb-6 transition-colors cursor-pointer ${uploadError ?
+                    'border-red-500 bg-red-900/20' :
+                    'border-slate-600 hover:border-violet-500'
+                  }`}
                 onClick={() => fileInputRef.current?.click()}
+                style={{
+                  minWidth: 220,   // increased width
+                  width: 220,
+                  minHeight: 140,  // slightly increased height
+                  height: 140,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
               >
                 {uploadedImage ? (
-                  <div className="relative">
+                  <div className="relative flex justify-center items-center w-full h-full">
                     <Image
                       src={uploadedImage}
                       alt="Uploaded photo"
-                      className="w-full max-w-xs mx-auto rounded-lg"
+                      className="rounded-lg object-cover"
+                      style={{
+                        width: '120px',   // increased image width
+                        height: '100px',  // increased image height
+                        objectFit: 'cover'
+                      }}
                     />
                     <button
                       onClick={(e) => {
@@ -291,13 +291,13 @@ const LiveDemo = () => {
                     </button>
                   </div>
                 ) : (
-                  <div>
-                    <Icon name="Upload" size={48} className="text-slate-400 mx-auto mb-4" />
-                    <p className="text-lg text-white mb-2">Click to upload your photo</p>
-                    <p className="text-sm text-slate-400">JPG, PNG up to 10MB</p>
+                  <div className="w-full">
+                    <Icon name="Upload" size={40} className="text-slate-400 mx-auto mb-2" />
+                    <p className="text-base text-white mb-1">Click to upload your photo</p>
+                    <p className="text-xs text-slate-400">JPG, PNG up to 10MB</p>
                     {uploadError && (
-                      <div className="mt-4 p-3 bg-red-900/50 rounded-lg text-red-300 text-sm flex items-center">
-                        <Icon name="AlertCircle" size={16} className="mr-2" />
+                      <div className="mt-2 p-2 bg-red-900/50 rounded-lg text-red-300 text-xs flex items-center">
+                        <Icon name="AlertCircle" size={14} className="mr-2" />
                         {uploadError}
                       </div>
                     )}
@@ -341,11 +341,10 @@ const LiveDemo = () => {
                     <button
                       key={style.id}
                       onClick={() => setSelectedStyle(style.id)}
-                      className={`p-3 rounded-lg border transition-all duration-300 ${
-                        selectedStyle === style.id
+                      className={`p-3 rounded-lg border transition-all duration-300 ${selectedStyle === style.id
                           ? `border-${style.color}-500 bg-${style.color}-500/20 text-${style.color}-300`
                           : 'border-slate-600 bg-slate-700/50 text-slate-300 hover:border-slate-500'
-                      }`}
+                        }`}
                     >
                       {style.name}
                     </button>
@@ -361,9 +360,7 @@ const LiveDemo = () => {
                 disabled={!uploadedImage || isProcessing}
                 iconName={isProcessing ? "Loader" : "Sparkles"}
                 iconPosition="left"
-                className={`w-full bg-gradient-to-r from-violet-500 to-purple-600 ${
-                  isProcessing ? 'animate-pulse' : ''
-                }`}
+                className="w-full bg-gradient-to-r from-violet-500 to-purple-600"
               >
                 {isProcessing ? 'Transforming...' : 'Transform with AI'}
               </Button>
@@ -372,14 +369,24 @@ const LiveDemo = () => {
             {/* Result Section */}
             <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-2xl p-8 border border-slate-700/50">
               <h3 className="text-2xl font-semibold text-white mb-6">Step 3: Your AI Masterpiece</h3>
-              
-              <div className="aspect-square bg-slate-700/50 rounded-xl mb-6 flex items-center justify-center overflow-hidden">
+
+              <div
+                className="bg-slate-700/50 rounded-xl mb-6 flex items-center justify-center overflow-hidden mx-auto"
+                style={{
+                  width: 320,      // increased width
+                  height: 480,     // increased height (2:3 ratio)
+                  aspectRatio: '2 / 3',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
                 {isProcessing ? (
-                  <div className="text-center">
+                  <div className="text-center w-full flex flex-col items-center justify-center">
                     <div className="w-16 h-16 border-4 border-violet-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
                     <p className="text-white mb-2">AI is working its magic...</p>
                     <div className="w-48 bg-slate-600 rounded-full h-2 mb-2">
-                      <div 
+                      <div
                         className="bg-violet-500 h-2 rounded-full transition-all duration-300"
                         style={{ width: `${progress}%` }}
                       ></div>
@@ -390,12 +397,18 @@ const LiveDemo = () => {
                   <Image
                     src={processedImage}
                     alt="AI transformed photo"
-                    className="w-full h-full object-cover rounded-xl"
+                    className="rounded-xl object-cover"
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      aspectRatio: '2 / 3'
+                    }}
                   />
                 ) : (
-                  <div className="text-center">
+                  <div className="text-center w-full">
                     <Icon name="Image" size={48} className="text-slate-400 mx-auto mb-4" />
-                    <p className="text-slate-400">Your transformed photo will appear here</p>
+                    <p className="text-slate-400">Your photo will appear here</p>
                   </div>
                 )}
               </div>
@@ -423,41 +436,13 @@ const LiveDemo = () => {
                       Try Again
                     </Button>
                   </div>
-
-                  {/* Share Buttons */}
-                  <div>
-                    <p className="text-sm text-slate-400 mb-3">Share your creation:</p>
-                    <div className="flex gap-3">
-                      <button
-                        onClick={() => shareImage('twitter')}
-                        className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg transition-colors flex items-center justify-center"
-                      >
-                        <Icon name="Twitter" size={16} className="mr-2" />
-                        Twitter
-                      </button>
-                      <button
-                        onClick={() => shareImage('facebook')}
-                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors flex items-center justify-center"
-                      >
-                        <Icon name="Facebook" size={16} className="mr-2" />
-                        Facebook
-                      </button>
-                      <button
-                        onClick={() => shareImage('linkedin')}
-                        className="flex-1 bg-blue-700 hover:bg-blue-800 text-white py-2 px-4 rounded-lg transition-colors flex items-center justify-center"
-                      >
-                        <Icon name="Linkedin" size={16} className="mr-2" />
-                        LinkedIn
-                      </button>
-                    </div>
-                  </div>
                 </div>
               )}
 
               {/* Stats */}
               <div className="mt-6 grid grid-cols-3 gap-4 text-center">
                 <div className="bg-slate-700/50 rounded-lg p-3">
-                  <div className="text-lg font-bold text-violet-400">2.3s</div>
+                  <div className="text-lg font-bold text-violet-400">20s</div>
                   <div className="text-xs text-slate-400">Avg Time</div>
                 </div>
                 <div className="bg-slate-700/50 rounded-lg p-3">
@@ -481,8 +466,8 @@ const LiveDemo = () => {
               Start your free trial and transform unlimited photos for your next event
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button 
-                variant="primary" 
+              <Button
+                variant="primary"
                 size="lg"
                 iconName="Sparkles"
                 iconPosition="left"
@@ -490,8 +475,8 @@ const LiveDemo = () => {
               >
                 Start Free Trial - 50 Transforms
               </Button>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="lg"
                 iconName="Calendar"
                 iconPosition="left"

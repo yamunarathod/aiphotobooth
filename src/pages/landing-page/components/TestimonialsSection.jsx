@@ -13,7 +13,7 @@ const EventShowcaseSection = () => {
       title: "Corporate Tech Summit",
       eventType: "Corporate Event",
       description: `We transformed a major corporate tech summit with our AI photobooth technology. Over 500 employees experienced instant digital art transformations during their company retreat. The professional digital portrait style was perfect for LinkedIn profiles and company newsletters. Setup took just 5 minutes and ran flawlessly for 8 hours straight.`,
-      eventImage: "https://images.unsplash.com/photo-1511578314322-379afb476865?w=400&h=300&fit=crop",
+      eventImage: "https://res.cloudinary.com/dk1xqwr3g/image/upload/v1751370556/IMG_0793_nfsun9.jpg",
       category: "corporate",
     },
     {
@@ -21,7 +21,7 @@ const EventShowcaseSection = () => {
       title: "Luxury Wedding Reception",
       eventType: "Wedding Event",
       description: `A beautiful garden wedding where we provided watercolor and vintage AI transformations for the happy couple and their guests. The bride loved how the watercolor style matched her wedding theme perfectly. Guests were amazed by the instant artistic transformations and shared them immediately on social media. No equipment setup stress for the wedding planner.`,
-      eventImage: "https://images.unsplash.com/photo-1519741497674-611481863552?w=400&h=300&fit=crop",
+      eventImage: "https://res.cloudinary.com/dk1xqwr3g/image/upload/v1751370554/IMG_0788_goktk6.jpg",
       category: "wedding",
     },
     {
@@ -29,7 +29,7 @@ const EventShowcaseSection = () => {
       title: "Product Launch Expo",
       eventType: "Brand Activation",
       description: `We powered a major product launch event with custom AI styles matching the brand colors and theme. The pop art transformations created incredible social media buzz with attendees sharing their branded photos instantly. The marketing team was thrilled with the organic reach and engagement. Perfect for brand awareness and customer engagement.`,
-      eventImage: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&h=300&fit=crop",
+      eventImage: "https://res.cloudinary.com/dk1xqwr3g/image/upload/v1751370555/IMG_0791_mug3tz.jpg",
       category: "brand",
     },
     {
@@ -37,7 +37,7 @@ const EventShowcaseSection = () => {
       title: "Annual Charity Gala",
       eventType: "Fundraising Event",
       description: `A prestigious charity gala where we provided elegant AI transformations for VIP guests and donors. The sophisticated art styles perfectly matched the upscale venue atmosphere. Guests loved the instant keepsakes and the event organizers saved significantly on traditional photobooth costs. The photos became lasting memories of their generous contributions.`,
-      eventImage: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=400&h=300&fit=crop",
+      eventImage: "https://res.cloudinary.com/dk1xqwr3g/image/upload/v1751370553/IMG_0786_hvisho.jpg",
       category: "gala",
     },
   ]
@@ -113,11 +113,11 @@ const EventShowcaseSection = () => {
             </div>
 
             {/* Event Image */}
-            <div className="relative">
+            <div className="relative min-h-[500px] h-[500px] max-h-[500px] flex items-center justify-center">
               <img
                 src={currentEventData.eventImage || "/placeholder.svg"}
                 alt={currentEventData.title}
-                className="w-full h-full object-cover min-h-[400px]"
+                className="w-full h-full object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent"></div>
               <div className="absolute bottom-6 left-6 right-6">

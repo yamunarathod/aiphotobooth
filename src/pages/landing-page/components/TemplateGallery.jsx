@@ -8,54 +8,89 @@ const TemplateGallery = () => {
   const [activeCategory, setActiveCategory] = useState("all")
 
   const categories = [
-    { id: "all", name: "All Styles", count: 6 },
-    { id: "ghibli", name: "Ghibli", count: 2 },
-    { id: "pixar", name: "Pixar", count: 2 },
-    { id: "packaging", name: "Packaging", count: 1 },
-    { id: "faceswap", name: "Face Swap", count: 1 },
+    { id: "all", name: "All Styles"},
+    { id: "ghibli", name: "Ghibli" },
+    { id: "pixar", name: "Pixar" },
+    { id: "packaging", name: "Packaging" },
+    { id: "faceswap", name: "Face Swap"},
   ]
 
   const templates = [
     {
       id: 1,
-      name: "Digital Portrait",
+      name: "Ghibli Magic",
       category: "ghibli",
-      image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=400&fit=crop",
+      images: [
+        "https://res.cloudinary.com/dk1xqwr3g/image/upload/v1751371140/image_20250627_121040_f4crjc.png",
+        "https://res.cloudinary.com/dk1xqwr3g/image/upload/v1751373008/image_20250621_154501_q3uj8c.png",
+
+      ],
     },
     {
       id: 2,
-      name: "Watercolor Dream",
+      name: "Pixar Art",
       category: "pixar",
-      image: "https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=400&h=400&fit=crop",
+      images: [
+        "https://res.cloudinary.com/dk1xqwr3g/image/upload/v1751371138/image_20250621_163838_gowdyd.png",
+        "https://res.cloudinary.com/dk1xqwr3g/image/upload/v1751373009/image_20250628_122347_hle5hw.png",
+        "https://res.cloudinary.com/dk1xqwr3g/image/upload/v1751373007/image_20250621_103551_stqgzf.png"
+
+      ],
     },
     {
       id: 3,
-      name: "Pop Art Explosion",
+      name: "Packaging Design",
       category: "packaging",
-      image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=400&fit=crop",
+      images: [
+        "https://res.cloudinary.com/dk1xqwr3g/image/upload/v1751369447/ai-transformed-package_pwucax.png",
+        "https://res.cloudinary.com/dk1xqwr3g/image/upload/v1751373010/image_20250628_113955_vet6mk.png",
+        "https://res.cloudinary.com/dk1xqwr3g/image/upload/v1751371140/image_20250621_104545_afntd1.png"
+
+      ],
     },
     {
       id: 4,
-      name: "Oil Painting Classic",
-      category: "ghibli",
-      image: "https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=400&h=400&fit=crop",
-    },
-    {
-      id: 5,
-      name: "Cartoon Character",
-      category: "pixar",
-      image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=400&fit=crop",
-    },
-    {
-      id: 6,
-      name: "Face Transform",
+      name: "Face Swap Fun",
       category: "faceswap",
-      image: "https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=400&h=400&fit=crop",
+      images: [
+        "https://res.cloudinary.com/dk1xqwr3g/image/upload/v1751371139/IMG_0787_ps9i2x.jpg",
+        "https://res.cloudinary.com/dk1xqwr3g/image/upload/v1751371139/IMG_0785_tvjtir.jpg",
+        "https://res.cloudinary.com/dk1xqwr3g/image/upload/v1751371139/image_20250628_140718_wfyygd.png",
+        "https://res.cloudinary.com/dk1xqwr3g/image/upload/v1751373007/W3_fmwglp.png",
+        "https://res.cloudinary.com/dk1xqwr3g/image/upload/v1751373006/Frame_45_dxofej.png",
+        "https://res.cloudinary.com/dk1xqwr3g/image/upload/v1751373004/M2_sqz9gv.png",
+
+
+
+
+      ],
     },
   ]
 
-  const filteredTemplates =
-    activeCategory === "all" ? templates : templates.filter((template) => template.category === activeCategory)
+  // Flatten images into individual cards
+  const allTemplateImages = templates.flatMap((template) =>
+    template.images.map((img, idx) => ({
+      id: `${template.id}-${idx}`,
+      name: template.name,
+      category: template.category,
+      image: img,
+    }))
+  )
+
+  // Utility to shuffle an array
+  function shuffleArray(array) {
+    const arr = [...array]
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[arr[i], arr[j]] = [arr[j], arr[i]]
+    }
+    return arr
+  }
+
+  const filteredImages =
+    activeCategory === "all"
+      ? shuffleArray(allTemplateImages)
+      : allTemplateImages.filter((item) => item.category === activeCategory)
 
   return (
     <section className="py-20 bg-gradient-to-b from-[#0f0f23] to-[#1a1a2e] min-h-screen">
@@ -95,7 +130,7 @@ const TemplateGallery = () => {
               }`}
             >
               <span className="font-medium">{category.name}</span>
-              <span className="ml-2 text-sm opacity-75">({category.count})</span>
+              {/* <span className="ml-2 text-sm opacity-75">({category.count})</span> */}
             </motion.button>
           ))}
         </div>
@@ -103,9 +138,9 @@ const TemplateGallery = () => {
         {/* Template Grid - 2x3 Layout for 6 cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-12 max-w-5xl mx-auto">
           <AnimatePresence mode="popLayout">
-            {filteredTemplates.slice(0, 6).map((template, index) => (
+            {filteredImages.slice(0, 6).map((item, index) => (
               <motion.div
-                key={template.id}
+                key={item.id}
                 layout
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -119,23 +154,20 @@ const TemplateGallery = () => {
                 className="group relative"
               >
                 <div className="relative bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-sm rounded-2xl overflow-hidden border border-slate-700/50 hover:border-violet-500/50 transition-all duration-500 hover:shadow-2xl hover:shadow-violet-500/10">
-                  {/* Main Image Container with Tilted Zoom */}
                   <div className="aspect-square overflow-hidden relative">
                     <img
-                      src={template.image || "/placeholder.svg"}
-                      alt={template.name}
+                      src={item.image || "/placeholder.svg"}
+                      alt={item.name}
                       className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110 group-hover:rotate-3"
                     />
                   </div>
-
-                  {/* Content */}
                   <div className="p-6">
                     <div className="flex items-center justify-between">
                       <h3 className="text-lg font-bold text-white group-hover:text-violet-300 transition-colors duration-300">
-                        {template.name}
+                        {item.name}
                       </h3>
                       <div className="bg-slate-700/50 px-3 py-1 rounded-lg text-xs text-slate-400 capitalize whitespace-nowrap ml-2">
-                        {template.category}
+                        {item.category}
                       </div>
                     </div>
                   </div>
@@ -145,17 +177,7 @@ const TemplateGallery = () => {
           </AnimatePresence>
         </div>
 
-        {/* Load More */}
-        <div className="text-center mb-16">
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="border-2 border-violet-400 text-violet-400 hover:bg-violet-500/10 px-8 py-4 rounded-xl font-semibold transition-all duration-300 flex items-center gap-2 mx-auto"
-          >
-            <Plus size={20} />
-            View All Styles
-          </motion.button>
-        </div>
+   
 
         {/* Custom Style CTA */}
         <motion.div

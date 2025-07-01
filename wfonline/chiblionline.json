@@ -539,8 +539,8 @@
         "296",
         2
       ],
-      "supabase_url": "https://gjwcskzeqqvomcuukytq.supabase.co",
-      "supabase_key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdqd2Nza3plcXF2b21jdXVreXRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEwOTg2NDMsImV4cCI6MjA2NjY3NDY0M30.voX24urUan0Hv4fb4-xUrcrOrGv_boHjIu42musT3KA",
+      "supabase_url": "https://ozkbnimjuhaweigscdby.supabase.co",
+      "supabase_key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im96a2JuaW1qdWhhd2VpZ3NjZGJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEyODc4NDYsImV4cCI6MjA2Njg2Mzg0Nn0.C4OgN-JEBX9ZqnRDXU9XmGnED2pCh3kI82GrHPXtq8U",
       "bucket": "outputimages",
       "base_file_name": "image",
       "table_name": "inputimagetable",
@@ -558,8 +558,8 @@
   },
   "296": {
     "inputs": {
-      "supabase_url": "https://gjwcskzeqqvomcuukytq.supabase.co",
-      "supabase_key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdqd2Nza3plcXF2b21jdXVreXRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEwOTg2NDMsImV4cCI6MjA2NjY3NDY0M30.voX24urUan0Hv4fb4-xUrcrOrGv_boHjIu42musT3KA",
+      "supabase_url": "https://ozkbnimjuhaweigscdby.supabase.co",
+      "supabase_key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im96a2JuaW1qdWhhd2VpZ3NjZGJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEyODc4NDYsImV4cCI6MjA2Njg2Mzg0Nn0.C4OgN-JEBX9ZqnRDXU9XmGnED2pCh3kI82GrHPXtq8U",
       "table_name": "inputimagetable",
       "image_column": "image_url",
       "id_column": "unique_id",

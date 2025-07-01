@@ -10,19 +10,19 @@ const HeroSection = () => {
 
   const beforeAfterImages = [
     {
-      before: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=300&fit=crop&crop=face",
-      after: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=300&h=300&fit=crop",
-      style: "Digital Portrait",
+      before: "https://res.cloudinary.com/dk1xqwr3g/image/upload/v1751369446/istockphoto-1303500951-612x612_jvep8j.jpg",
+      after: "https://res.cloudinary.com/dk1xqwr3g/image/upload/v1751369447/ai-transformed-package_pwucax.png",
+      style: "TrainBox",
     },
     {
-      before: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=300&h=300&fit=crop&crop=face",
-      after: "https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=300&h=300&fit=crop",
-      style: "Watercolor Dream",
+      before: "https://res.cloudinary.com/dk1xqwr3g/image/upload/v1751369596/df_dt9pve.jpg",
+      after: "https://res.cloudinary.com/dk1xqwr3g/image/upload/v1751369597/ai-transformed-ghibli_n1ilgq.png",
+      style: "Ghibli",
     },
     {
-      before: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&h=300&fit=crop&crop=face",
-      after: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=300&h=300&fit=crop",
-      style: "Pop Art",
+      before: "https://res.cloudinary.com/dk1xqwr3g/image/upload/v1751369595/photo-1438761681033-6461ffad8d80_fkh3xz.jpg",
+      after: "https://res.cloudinary.com/dk1xqwr3g/image/upload/v1751369595/ai-transformed-pixar_pwzmsl.png",
+      style: "Pixar Art",
     },
   ]
 
@@ -94,7 +94,7 @@ const HeroSection = () => {
                     <img
                       src={beforeAfterImages[currentImageIndex].before || "/placeholder.svg"}
                       alt="Before transformation"
-                      className="w-full h-64 object-cover transition-all duration-500"
+                      className="w-full h-96 object-cover transition-all duration-500" // increased height
                     />
                   </div>
                 </div>
@@ -105,7 +105,7 @@ const HeroSection = () => {
                     <img
                       src={beforeAfterImages[currentImageIndex].after || "/placeholder.svg"}
                       alt="After transformation"
-                      className="w-full h-64 object-cover transition-all duration-500"
+                      className="w-full h-96 object-cover transition-all duration-500" // increased height
                     />
                     <div className="absolute top-2 right-2">
                       <div className="bg-violet-500/90 px-2 py-1 rounded text-xs text-white font-medium">
@@ -114,30 +114,6 @@ const HeroSection = () => {
                     </div>
                   </div>
                 </div>
-              </div>
-
-              {/* Transformation Arrow */}
-              <div className="flex items-center justify-center mb-6">
-                <div className="flex items-center">
-                  <div className="h-px w-12 bg-gradient-to-r from-transparent to-violet-400"></div>
-                  <div className="bg-violet-500 rounded-full p-2 mx-3">
-                    <Sparkles size={16} className="text-white" />
-                  </div>
-                  <div className="h-px w-12 bg-gradient-to-l from-transparent to-violet-400"></div>
-                </div>
-              </div>
-
-              {/* Style Indicators */}
-              <div className="flex justify-center space-x-2 mb-6">
-                {beforeAfterImages.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setCurrentImageIndex(index)}
-                    className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                      index === currentImageIndex ? "bg-violet-500" : "bg-slate-600 hover:bg-slate-500"
-                    }`}
-                  />
-                ))}
               </div>
 
               {/* Features */}
