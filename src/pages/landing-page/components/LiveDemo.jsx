@@ -1,21 +1,25 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Button from '../../../components/ui/Button';
 import Icon from '../../../components/AppIcon';
 import Image from '../../../components/AppImage';
+import { v4 as uuidv4 } from 'uuid';
+import { supabase } from '../../../utils/supabase';
 
 const LiveDemo = () => {
   const [uploadedImage, setUploadedImage] = useState(null);
-  const [selectedStyle, setSelectedStyle] = useState('digital-art');
+  const [selectedStyle, setSelectedStyle] = useState('ghibli');
   const [isProcessing, setIsProcessing] = useState(false);
   const [processedImage, setProcessedImage] = useState(null);
   const [progress, setProgress] = useState(0);
+  const [uploadError, setUploadError] = useState(null);
+  const [uuid, setUuid] = useState('');
   const fileInputRef = useRef(null);
 
   const styles = [
-    { id: 'digital-art', name: 'Digital Art', color: 'violet' },
-    { id: 'watercolor', name: 'Watercolor', color: 'blue' },
-    { id: 'pop-art', name: 'Pop Art', color: 'pink' },
-    { id: 'oil-painting', name: 'Oil Painting', color: 'amber' }
+    { id: 'ghibli', name: 'Ghibli', color: 'emerald' },
+    { id: 'pixar', name: 'Pixar', color: 'blue' },
+    { id: 'snoopy', name: 'Snoopy', color: 'yellow' },
+    { id: 'package', name: 'Package', color: 'rose' }
   ];
 
   const sampleImages = [
@@ -32,44 +36,179 @@ const LiveDemo = () => {
     "https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=300&h=300&fit=crop"
   ];
 
-  const handleFileUpload = (event) => {
-    const file = event.target.files[0];
-    if (file && file.type.startsWith('image/')) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
+  const handleFileUpload = async (event) => {
+    const file = event.target.files?.[0];
+    setUploadError(null);
+    
+    if (!file) return;
+    
+    // Validate file type and size
+    if (!file.type.startsWith('image/')) {
+      setUploadError('Only image files are allowed (JPG, PNG)');
+      return;
+    }
+    
+    if (file.size > 10 * 1024 * 1024) { // 10MB
+      setUploadError('File size exceeds 10MB limit');
+      return;
+    }
+    
+    const newUuid = uuidv4();
+    setUuid(newUuid);
+    const reader = new FileReader();
+    
+    reader.onload = async (e) => {
+      // Validate image dimensions
+      const img = new window.Image();
+      img.src = e.target.result.toString();
+      
+      await new Promise((resolve) => {
+        img.onload = () => {
+          if (img.naturalWidth > 4096 || img.naturalHeight > 4096) {
+            setUploadError('Maximum image dimensions are 4096x4096 pixels');
+            resolve();
+            return;
+          }
+          resolve();
+        };
+      });
+
+      if (uploadError) return;
+      
+      console.log('Attempting Supabase upload:');
+      console.log('File type:', file.type);
+      console.log('File size:', file.size, 'bytes');
+
+      try {
+        // Upload to Supabase storage
+        const { data, error } = await supabase.storage
+          .from('inputimages')
+          .upload(`${newUuid}`, file, {
+            contentType: file.type,
+            upsert: false
+          });
+
+        if (error) {
+          console.error('Upload error:', error);
+          return;
+        }
+
+        // Get public URL
+        const { data: urlData } = supabase.storage
+          .from('inputimages')
+          .getPublicUrl(`${newUuid}`);
+
+        // Insert record to inputimagetable
+        const { error: dbError } = await supabase
+          .from('inputimagetable')
+          .insert([{
+            unique_id: newUuid,
+            image_url: urlData.publicUrl
+          }]);
+
+        if (dbError) {
+          console.error('Database error:', dbError);
+          return;
+        }
+
         setUploadedImage(e.target.result);
         setProcessedImage(null);
-      };
-      reader.readAsDataURL(file);
+      } catch (error) {
+        console.error('Error uploading file:', error);
+        setUploadError('Failed to upload image. Please try again.');
+      }
+    };
+    
+    reader.readAsDataURL(file);
+  };
+
+  const handleSampleSelect = async (imageUrl) => {
+    const newUuid = uuidv4();
+    setUuid(newUuid);
+    
+    try {
+      // Insert record to inputimagetable with the sample image URL
+      const { error: dbError } = await supabase
+        .from('inputimagetable')
+        .insert([{
+          unique_id: newUuid,
+          image_url: imageUrl
+        }]);
+  
+      if (dbError) {
+        console.error('Database error:', dbError);
+        return;
+      }
+  
+      setUploadedImage(imageUrl);
+      setProcessedImage(null);
+    } catch (error) {
+      console.error('Error processing sample image:', error);
     }
   };
 
-  const handleSampleSelect = (imageUrl) => {
-    setUploadedImage(imageUrl);
-    setProcessedImage(null);
-  };
-
-  const processImage = () => {
+  const processImage = async () => {
     if (!uploadedImage) return;
 
     setIsProcessing(true);
     setProgress(0);
     setProcessedImage(null);
 
-    // Simulate AI processing with progress
-    const interval = setInterval(() => {
-      setProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setIsProcessing(false);
-          // Set a mock processed image based on selected style
-          const randomIndex = Math.floor(Math.random() * processedSamples.length);
-          setProcessedImage(processedSamples[randomIndex]);
-          return 100;
-        }
-        return prev + Math.random() * 15;
+    try {
+      // Load workflow JSON
+      const workflowResponse = await fetch(`/wfonline/${selectedStyle}online.json`);
+      let workflow = await workflowResponse.json();
+
+      // Update node 283 with UUID
+      workflow['283'].inputs.unique_id = uuid; // Corrected line
+      console.log(workflow);
+      // Send to Runpod
+      const runpodResponse = await fetch('https://api.runpod.ai/v2/tdme3jq4u7zg1s/run', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_RUNPOD_API_KEY}`
+        },
+        body: JSON.stringify({ input: { workflow } })
       });
-    }, 200);
+
+      const result = await runpodResponse.json();
+      const jobId = result.id;
+
+      // Poll for job completion
+      const checkStatus = async () => {
+        const statusResponse = await fetch(`https://api.runpod.ai/v2/tdme3jq4u7zg1s/status/${jobId}`, {
+          headers: {
+            'Authorization': `Bearer ${import.meta.env.VITE_RUNPOD_API_KEY}`
+          }
+        });
+        const statusData = await statusResponse.json();
+
+        if (statusData.status === 'COMPLETED') {
+          // Fetch output from Supabase
+          const { data, error } = await supabase
+            .from('inputimagetable')
+            .select('output')
+            .eq('unique_id', uuid)
+            .single();
+
+          if (!error && data) {
+            setProcessedImage(data.output);
+          }
+          setIsProcessing(false);
+          clearInterval(statusInterval);
+        } else if (statusData.status === 'FAILED') {
+          console.error('Processing failed:', statusData);
+          setIsProcessing(false);
+          clearInterval(statusInterval);
+        }
+      };
+
+      const statusInterval = setInterval(checkStatus, 2000);
+    } catch (error) {
+      console.error('Processing error:', error);
+      setIsProcessing(false);
+    }
   };
 
   const downloadImage = () => {
@@ -123,10 +262,14 @@ const LiveDemo = () => {
             {/* Upload Section */}
             <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-2xl p-8 border border-slate-700/50">
               <h3 className="text-2xl font-semibold text-white mb-6">Step 1: Choose Your Photo</h3>
-              
+
               {/* Upload Area */}
-              <div 
-                className="border-2 border-dashed border-slate-600 rounded-xl p-8 text-center mb-6 hover:border-violet-500 transition-colors cursor-pointer"
+              <div
+                className={`border-2 border-dashed rounded-xl p-8 text-center mb-6 transition-colors cursor-pointer ${
+                  uploadError ?
+                  'border-red-500 bg-red-900/20' :
+                  'border-slate-600 hover:border-violet-500'
+                }`}
                 onClick={() => fileInputRef.current?.click()}
               >
                 {uploadedImage ? (
@@ -152,6 +295,12 @@ const LiveDemo = () => {
                     <Icon name="Upload" size={48} className="text-slate-400 mx-auto mb-4" />
                     <p className="text-lg text-white mb-2">Click to upload your photo</p>
                     <p className="text-sm text-slate-400">JPG, PNG up to 10MB</p>
+                    {uploadError && (
+                      <div className="mt-4 p-3 bg-red-900/50 rounded-lg text-red-300 text-sm flex items-center">
+                        <Icon name="AlertCircle" size={16} className="mr-2" />
+                        {uploadError}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
