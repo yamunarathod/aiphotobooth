@@ -113,7 +113,7 @@ const FAQSection = () => {
                 className="bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center gap-3"
               >
                 <MessageCircle size={20} />
-                Book a Demo on WhatsApp
+                Book a Demo
               </button>
             </div>
           </div>

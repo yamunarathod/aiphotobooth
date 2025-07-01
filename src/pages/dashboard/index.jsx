@@ -1,32 +1,109 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import Button from '../../components/ui/Button';
 import Icon from '../../components/AppIcon';
+import EventFormFields from '../create-event/components/EventFormFields';
+import StyleSelector from '../create-event/components/StyleSelector';
+import EventSummary from '../create-event/components/EventSummary';
+import LicenseDownload from '../create-event/components/LicenseDownload';
 
 const Dashboard = () => {
   const { user, userProfile, signOut } = useAuth();
   const navigate = useNavigate();
 
-  const handleSignOut = async () => {
-    const result = await signOut();
-    if (result?.success) {
-      navigate('/');
-    }
+  // Step: 'form' | 'styles' | 'summary' | 'license'
+  const [step, setStep] = useState(null);
+
+  const [formData, setFormData] = useState({
+    eventName: '',
+    startDate: '',
+    startTime: '',
+    endDate: '',
+    endTime: '',
+    location: '',
+    description: ''
+  });
+  const [errors, setErrors] = useState({});
+  const [selectedStyles, setSelectedStyles] = useState([]);
+  const [subscriptionPlan] = useState('Professional');
+  const [maxStyles] = useState(6);
+
+  // Store all created events
+  const [events, setEvents] = useState([]);
+
+  // For summary/license
+  const [createdEvent, setCreatedEvent] = useState(null);
+
+  // Handlers
+  const handleInputChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const stats = [
-    { icon: 'Sparkles', label: 'Transformations Used', value: '127', limit: '1,000' },
-    { icon: 'Calendar', label: 'Events This Month', value: '3', trend: '+1' },
-    { icon: 'Users', label: 'Total Guests Served', value: '452', trend: '+89' },
-    { icon: 'Download', label: 'Photos Downloaded', value: '1,247', trend: '+203' }
-  ];
+  const handleEventFormSubmit = (e) => {
+    e.preventDefault();
+    let newErrors = {};
+    if (!formData.eventName) newErrors.eventName = "Event name is required";
+    if (!formData.startDate) newErrors.startDate = "Start date is required";
+    if (!formData.startTime) newErrors.startTime = "Start time is required";
+    if (!formData.endDate) newErrors.endDate = "End date is required";
+    if (!formData.endTime) newErrors.endTime = "End time is required";
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) return;
+    setStep('styles');
+  };
 
-  const recentActivity = [
-    { id: 1, event: 'Corporate  Event - TechFlow', date: '2 hours ago', photos: 45, style: 'Digital Portrait' },
-    { id: 2, event: 'Wedding - Sarah & John', date: '1 day ago', photos: 89, style: 'Watercolor Dream' },
-    { id: 3, event: 'Birthday Party - Emma', date: '3 days ago', photos: 23, style: 'Pop Art Explosion' }
-  ];
+  const handleStyleToggle = (styleId, isSelected) => {
+    setSelectedStyles((prev) =>
+      isSelected
+        ? [...prev, styleId]
+        : prev.filter((id) => id !== styleId)
+    );
+  };
+
+  const handleStylesSubmit = (e) => {
+    e.preventDefault();
+    let newErrors = {};
+    if (selectedStyles.length === 0) newErrors.styles = "Please select at least one AI style.";
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) return;
+    setCreatedEvent({ ...formData, selectedStyles, subscriptionPlan });
+    setStep('summary');
+  };
+
+  const handleNextFromSummary = () => {
+    setStep('license');
+  };
+
+  const handleLicenseDone = () => {
+    // Add event to dashboard
+    setEvents([
+      ...events,
+      { ...createdEvent, id: Date.now(), date: new Date().toLocaleString() }
+    ]);
+    // Reset all
+    setFormData({
+      eventName: '',
+      startDate: '',
+      startTime: '',
+      endDate: '',
+      endTime: '',
+      location: '',
+      description: ''
+    });
+    setSelectedStyles([]);
+    setCreatedEvent(null);
+    setStep(null);
+    setErrors({});
+  };
+
+  const handleBackToEdit = () => setStep('form');
+  const handleBackToStyles = () => setStep('styles');
+
+  const handleSignOut = async () => {
+    const result = await signOut();
+    if (result?.success) navigate('/');
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0f0f23] to-[#1a1a2e]">
@@ -77,7 +154,12 @@ const Dashboard = () => {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {stats.map((stat, index) => (
+          {[
+            { icon: 'Sparkles', label: 'Transformations Used', value: '127', limit: '1,000' },
+            { icon: 'Calendar', label: 'Events This Month', value: '3', trend: '+1' },
+            { icon: 'Users', label: 'Total Guests Served', value: '452', trend: '+89' },
+            { icon: 'Download', label: 'Photos Downloaded', value: '1,247', trend: '+203' }
+          ].map((stat, index) => (
             <div
               key={index}
               className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50"
@@ -104,8 +186,8 @@ const Dashboard = () => {
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
-          {/* Recent Activity */}
           <div className="lg:col-span-2">
+            {/* Recent Activity */}
             <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-semibold text-white">Recent Events</h3>
@@ -115,56 +197,168 @@ const Dashboard = () => {
                   className="border-violet-400 text-violet-400"
                   iconName="Plus"
                   iconPosition="left"
+                  onClick={() => setStep('form')}
                 >
                   New Event
                 </Button>
               </div>
 
               <div className="space-y-4">
-                {recentActivity.map((activity) => (
-                  <div
-                    key={activity.id}
-                    className="flex items-center justify-between p-4 bg-slate-700/30 rounded-lg border border-slate-600/50 hover:border-violet-500/50 transition-colors"
-                  >
-                    <div className="flex-1">
-                      <h4 className="text-white font-medium mb-1">{activity.event}</h4>
-                      <p className="text-slate-400 text-sm mb-2">{activity.date}</p>
-                      <div className="flex items-center space-x-4 text-xs text-slate-500">
-                        <span>{activity.photos} photos</span>
-                        <span>•</span>
-                        <span>{activity.style}</span>
+                {events.length === 0 ? (
+                  <div className="text-slate-400 text-center">No events yet. Click "New Event" to create one.</div>
+                ) : (
+                  events.map((activity) => (
+                    <div
+                      key={activity.id}
+                      className="flex items-center justify-between p-4 bg-slate-700/30 rounded-lg border border-slate-600/50 hover:border-violet-500/50 transition-colors"
+                    >
+                      <div className="flex-1">
+                        <h4 className="text-white font-medium mb-1">{activity.eventName}</h4>
+                        <p className="text-slate-400 text-sm mb-2">{activity.date}</p>
+                        <div className="flex items-center space-x-4 text-xs text-slate-500">
+                          <span>
+                            {activity.selectedStyles?.length || 0} styles
+                          </span>
+                          <span>•</span>
+                          <span>{activity.location}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="border-slate-600 text-slate-300"
+                        >
+                          View
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="border-violet-400 text-violet-400"
+                          iconName="Download"
+                        >
+                          Download
+                        </Button>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="border-slate-600 text-slate-300"
-                      >
-                        View
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="border-violet-400 text-violet-400"
-                        iconName="Download"
-                      >
-                        Download
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-6 text-center">
-                <Button
-                  variant="outline"
-                  className="border-slate-600 text-slate-300"
-                >
-                  View All Events
-                </Button>
+                  ))
+                )}
               </div>
             </div>
+
+            {/* Modals for each step */}
+            {step === 'form' && (
+              <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+                <div className="bg-slate-900 rounded-xl p-8 w-full max-w-lg relative">
+                  <button
+                    className="absolute top-4 right-4 text-white"
+                    onClick={() => setStep(null)}
+                  >
+                    <Icon name="X" size={20} />
+                  </button>
+                  <EventFormFields
+                    formData={formData}
+                    handleInputChange={handleInputChange}
+                    errors={errors}
+                    onSubmit={handleEventFormSubmit}
+                  />
+                </div>
+              </div>
+            )}
+
+            {step === 'styles' && (
+              <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+                <div className="bg-slate-900 rounded-xl p-8 w-full max-w-lg relative">
+                  <button
+                    className="absolute top-4 right-4 text-white"
+                    onClick={() => setStep(null)}
+                  >
+                    <Icon name="X" size={20} />
+                  </button>
+                  <form onSubmit={handleStylesSubmit}>
+                    <StyleSelector
+                      selectedStyles={selectedStyles}
+                      onStyleToggle={handleStyleToggle}
+                      subscriptionPlan={subscriptionPlan}
+                      maxStyles={maxStyles}
+                      errors={errors}
+                    />
+                    {errors.styles && (
+                      <p className="mt-2 text-sm text-error flex items-center">
+                        <Icon name="AlertCircle" size={16} className="mr-1" />
+                        {errors.styles}
+                      </p>
+                    )}
+                    <div className="pt-4 flex justify-between">
+                      <button
+                        type="button"
+                        className="bg-slate-700 text-white px-6 py-2 rounded-lg font-medium hover:bg-slate-600 transition"
+                        onClick={handleBackToEdit}
+                      >
+                        Back
+                      </button>
+                      <button
+                        type="submit"
+                        className="bg-primary text-white px-6 py-2 rounded-lg font-medium hover:bg-primary/90 transition"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
+
+            {step === 'summary' && createdEvent && (
+              <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+                <div className="bg-slate-900 rounded-xl p-8 w-full max-w-lg relative">
+                  <button
+                    className="absolute top-4 right-4 text-white"
+                    onClick={() => setStep(null)}
+                  >
+                    <Icon name="X" size={20} />
+                  </button>
+                  <EventSummary
+                    formData={createdEvent}
+                    selectedStyles={createdEvent.selectedStyles}
+                    subscriptionPlan={createdEvent.subscriptionPlan}
+                  />
+                  <div className="mt-6 flex justify-between">
+                    <button
+                      className="bg-slate-700 text-white px-6 py-2 rounded-lg font-medium hover:bg-slate-600 transition"
+                      onClick={handleBackToStyles}
+                    >
+                      Back
+                    </button>
+                    <button
+                      className="bg-primary text-white px-6 py-2 rounded-lg font-medium hover:bg-primary/90 transition"
+                      onClick={handleNextFromSummary}
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {step === 'license' && createdEvent && (
+              <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+                <div className="bg-slate-900 rounded-xl p-8 w-full max-w-lg relative">
+                  <button
+                    className="absolute top-4 right-4 text-white"
+                    onClick={handleLicenseDone}
+                  >
+                    <Icon name="X" size={20} />
+                  </button>
+                  <LicenseDownload
+                    eventData={createdEvent}
+                    selectedStyles={createdEvent.selectedStyles}
+                    onClose={handleLicenseDone}
+                    onNewEvent={() => setStep('form')}
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Quick Actions */}

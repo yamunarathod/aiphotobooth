@@ -12,6 +12,10 @@ import NotFound from "pages/NotFound";
 import React from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "contexts/AuthContext";
+import SubscriptionManagement from "pages/subscription-management";
+import EventManagement from "pages/event-management";
+import CreateEvent from "pages/create-event";
+import UserProfile from "pages/user-profile";
 
 // Component to protect auth routes (login/signup) from logged-in users
 export const AuthRoute = ({ children }) => {
@@ -86,6 +90,10 @@ const Routes = () => {
                 </AuthRoute>
               }
             />
+                    <Route path="/subscription-management" element={<SubscriptionManagement />} />
+        <Route path="/event-management" element={<EventManagement />} />
+        <Route path="/create-event" element={<CreateEvent />} />
+        <Route path="/user-profile" element={<UserProfile />} />
             
             {/* Protected routes - require authentication */}
             <Route

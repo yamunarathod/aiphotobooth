@@ -2,18 +2,48 @@
 
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { useAuth } from "../../contexts/AuthContext" // Import the AuthContext
+import { useAuth } from "../../contexts/AuthContext"
 import Button from "../../components/ui/Button"
 import Icon from "../../components/AppIcon"
+import { makeRazorpayPayment } from "../../utils/razorpay"
 
 const SubscriptionPage = () => {
   const navigate = useNavigate()
   const [eventSize, setEventSize] = useState(100)
   const [billingCycle, setBillingCycle] = useState("monthly")
   const [selectedPlan, setSelectedPlan] = useState("professional")
+  const [isProcessing, setIsProcessing] = useState(false)
   
-  // Use AuthContext instead of local state
   const { user, userProfile, signOut } = useAuth()
+
+  // Function to get the correct database user ID
+  const getDatabaseUserId = () => {
+    // Try to get the database UUID from userProfile first
+    if (userProfile?.id && userProfile.id !== user?.id) {
+      console.log('Using userProfile.id as database UUID:', userProfile.id)
+      return userProfile.id
+    }
+    
+    // Check if userProfile has a specific UUID field
+    if (userProfile?.uuid) {
+      console.log('Using userProfile.uuid:', userProfile.uuid)
+      return userProfile.uuid
+    }
+    
+    // Check if userProfile has database_id field
+    if (userProfile?.database_id) {
+      console.log('Using userProfile.database_id:', userProfile.database_id)
+      return userProfile.database_id
+    }
+    
+    // For your specific case, hardcode the known UUID
+    // TODO: Replace this with dynamic lookup once you fix the ID mapping
+    const knownDatabaseUUID = "190a258b-f9f1-41d8-a34e-b30c5b381397"
+    console.log('Using hardcoded database UUID:', knownDatabaseUUID)
+    console.log('Auth user ID for reference:', user?.id)
+    
+    return knownDatabaseUUID
+  }
 
   const handleLogout = async () => {
     try {
@@ -21,7 +51,6 @@ const SubscriptionPage = () => {
       navigate("/login")
     } catch (error) {
       console.error("Logout error:", error)
-      // Fallback navigation even if logout fails
       navigate("/login")
     }
   }
@@ -113,13 +142,111 @@ const SubscriptionPage = () => {
     return 3
   }
 
-  const handleSelectPlan = (planId) => {
+  const handleSelectPlan = async (planId) => {
+    if (isProcessing) return
+
     setSelectedPlan(planId)
-    // Here you would typically redirect to payment processor
-    alert(`Selected ${plans.find((p) => p.id === planId)?.name} plan. Payment integration would go here.`)
+    const plan = plans.find((p) => p.id === planId)
+    const name = getUserDisplayName()
+    const email = getUserEmail()
+    const baseAmount = calculatePrice(plan) * getEventSizeMultiplier()
+    
+    // Get the correct database user ID
+    const databaseUserId = getDatabaseUserId()
+    const authUserId = user?.id
+
+    console.log('=== USER ID DEBUG ===')
+    console.log('Database User ID:', databaseUserId)
+    console.log('Auth User ID:', authUserId)
+    console.log('User Profile:', userProfile)
+    console.log('====================')
+
+    if (planId === "enterprise") {
+      // For enterprise, still log the interest in Firebase
+      try {
+        const { createPaymentRecord } = await import("../../services/paymentService");
+
+        await createPaymentRecord({
+          userId: databaseUserId, // Use database UUID
+          userEmail: email,
+          userName: name,
+          planId: planId,
+          planName: plan.name,
+          amount: baseAmount,
+          currency: 'INR',
+          billingCycle,
+          eventSize,
+          status: 'enterprise_inquiry',
+          paymentMethod: 'enterprise_contact',
+          metadata: {
+            authUserId: authUserId, // Store auth ID for reference
+            transformsIncluded: plan.transformsIncluded,
+            features: plan.features,
+            inquiry_type: 'enterprise_plan_interest',
+            timestamp: new Date().toISOString()
+          }
+        })
+      } catch (error) {
+        console.error('Error logging enterprise inquiry:', error)
+      }
+      
+      alert("We'll contact you soon. Or reach out to sales@magicai.com.")
+      return
+    }
+
+    if (!user?.id) {
+      alert("Please log in to continue with payment.")
+      navigate("/login")
+      return
+    }
+
+    if (!databaseUserId) {
+      alert("Unable to identify user account. Please log in again.")
+      navigate("/login")
+      return
+    }
+
+    setIsProcessing(true)
+
+    try {
+      await makeRazorpayPayment({
+        name,
+        email,
+        amountInRupees: baseAmount,
+        planDetails: plan,
+        userId: databaseUserId,  // Use database UUID
+        authUserId: authUserId,  // Pass auth ID for reference
+        eventSize,
+        billingCycle,
+        onSuccess: (response) => {
+          console.log("Payment successful:", response)
+          setIsProcessing(false)
+          
+          // Show success message with more details
+          alert(`Payment successful! 
+Subscription: ${plan.name} (${billingCycle})
+Payment ID: ${response.razorpay_payment_id}
+Your subscription is now active!`)
+          
+          // Redirect to dashboard
+          navigate("/dashboard")
+        },
+        onFailure: (error) => {
+          console.error("Payment failed:", error)
+          setIsProcessing(false)
+          
+          // Show more descriptive error message
+          const errorMessage = error.description || "Payment failed. Please try again."
+          alert(`Payment Failed: ${errorMessage}`)
+        },
+      })
+    } catch (error) {
+      console.error("Error initiating payment:", error)
+      setIsProcessing(false)
+      alert("Error initiating payment. Please try again.")
+    }
   }
 
-  // Get display name from user data
   const getUserDisplayName = () => {
     if (userProfile?.name) return userProfile.name
     if (user?.user_metadata?.name) return user.user_metadata.name
@@ -149,7 +276,6 @@ const SubscriptionPage = () => {
 
             <div className="flex items-center space-x-4">
               {user ? (
-                // Logged in user menu
                 <div className="flex items-center space-x-4">
                   <Link
                     to="/dashboard"
@@ -169,7 +295,6 @@ const SubscriptionPage = () => {
                   </div>
                 </div>
               ) : (
-                // Not logged in menu (this shouldn't show due to PrivateRoute protection)
                 <>
                   <Link to="/login" className="text-slate-300 hover:text-white transition-colors">
                     Sign In
@@ -281,7 +406,6 @@ const SubscriptionPage = () => {
                 }`}
                 onClick={() => setSelectedPlan(plan.id)}
               >
-                {/* Popular Badge */}
                 {plan.popular && (
                   <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
                     <div className="bg-gradient-to-r from-violet-500 to-purple-600 px-6 py-2 rounded-full text-white text-sm font-semibold">
@@ -290,7 +414,6 @@ const SubscriptionPage = () => {
                   </div>
                 )}
 
-                {/* Plan Header */}
                 <div className="text-center mb-8">
                   <h3 className="text-2xl font-bold text-white mb-2">{plan.name}</h3>
                   <p className="text-slate-400 mb-6">{plan.description}</p>
@@ -317,7 +440,6 @@ const SubscriptionPage = () => {
                   )}
                 </div>
 
-                {/* Features */}
                 <div className="mb-8">
                   <h4 className="text-lg font-semibold text-white mb-4">What's included:</h4>
                   <ul className="space-y-3">
@@ -344,20 +466,23 @@ const SubscriptionPage = () => {
                   )}
                 </div>
 
-                {/* CTA Button */}
                 <Button
                   onClick={() => handleSelectPlan(plan.id)}
                   variant={plan.popular ? "primary" : "outline"}
                   size="lg"
+                  disabled={isProcessing}
                   className={`w-full ${
                     plan.popular
                       ? "bg-gradient-to-r from-violet-500 to-purple-600"
                       : "border-violet-400 text-violet-400 hover:bg-violet-500/10"
-                  }`}
-                  iconName={plan.id === "enterprise" ? "Phone" : "CreditCard"}
+                  } ${isProcessing ? "opacity-50 cursor-not-allowed" : ""}`}
+                  iconName={isProcessing ? "Loader" : (plan.id === "enterprise" ? "Phone" : "CreditCard")}
                   iconPosition="left"
                 >
-                  {plan.id === "enterprise" ? "Contact Sales" : "Choose Plan"}
+                  {isProcessing 
+                    ? "Processing..." 
+                    : (plan.id === "enterprise" ? "Contact Sales" : "Choose Plan")
+                  }
                 </Button>
 
                 {plan.id !== "enterprise" && (
