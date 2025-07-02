@@ -34,7 +34,7 @@ const FAQSection = () => {
   }
 
   return (
-    <section className="py-20 bg-gradient-to-b from-[#1a1a2e] to-[#0f0f23]">
+    <section id="faq" className="py-20 bg-gradient-to-b from-[#1a1a2e] to-[#0f0f23] scroll-mt-16">
       <div className="container mx-auto px-6">
         {/* Header */}
         <div className="text-center mb-20">

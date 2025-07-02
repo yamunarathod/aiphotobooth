@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Icon from '../../components/AppIcon';
+import { supabase } from '../../utils/supabase';
 
 const Signup = () => {
   const [formData, setFormData] = useState({
@@ -58,6 +59,19 @@ const Signup = () => {
     });
     
     if (result?.success) {
+      // Initialize user trial record
+      try {
+        await supabase
+          .from('user_trials')
+          .insert({
+            user_id: result.user.id,
+            has_used_trial: false,
+            trial_date: null
+          });
+      } catch (error) {
+        console.error('Error initializing user trial:', error);
+      }
+      
       navigate('/');
     }
     

@@ -18,7 +18,6 @@ const Header = () => {
 
   const navLinks = [
     { name: 'Styles', href: '#styles' },
-    { name: 'Demo', href: '#demo' },
     { name: 'Pricing', href: '/subscription' },
     { name: 'FAQ', href: '#faq' }
   ];

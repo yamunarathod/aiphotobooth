@@ -1,8 +1,22 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Input from '../../../components/ui/Input';
 import Icon from '../../../components/AppIcon';
+import DatePicker from 'react-datepicker';
+import "react-datepicker/dist/react-datepicker.css";
 
 const EventFormFields = ({ formData, handleInputChange, errors, onSubmit }) => {
+  // Helper function to handle date picker changes
+  const handleDateChange = (date, fieldName) => {
+    const event = {
+      target: {
+        name: fieldName,
+        value: date
+      }
+    };
+    handleInputChange(event);
+  };
+
+  // Format functions remain the same
   const formatDateForInput = (dateString) => {
     if (!dateString) return '';
     const date = new Date(dateString);
@@ -46,15 +60,18 @@ const EventFormFields = ({ formData, handleInputChange, errors, onSubmit }) => {
             <label className="block text-sm font-medium text-text-primary mb-2">
               Start Date *
             </label>
-            <Input
-              type="date"
-              name="startDate"
-              value={formatDateForInput(formData.startDate)}
-              onChange={handleInputChange}
-              required
-              min={new Date().toISOString().split('T')[0]}
-              className={errors.startDate ? 'border-error' : ''}
-            />
+            <div className={`relative ${errors.startDate ? 'border-error' : ''}`}>
+              <DatePicker
+                selected={formData.startDate ? new Date(formData.startDate) : null}
+                onChange={(date) => handleDateChange(date, 'startDate')}
+                dateFormat="yyyy-MM-dd"
+                minDate={new Date()}
+                placeholderText="Select start date"
+                className="w-full px-3 py-2 glass border border-white/20 rounded-lg text-text-primary bg-transparent focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                required
+              />
+              <Icon name="Calendar" size={16} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-text-secondary pointer-events-none" />
+            </div>
             {errors.startDate && (
               <p className="mt-1 text-sm text-error flex items-center">
                 <Icon name="AlertCircle" size={16} className="mr-1" />
@@ -67,14 +84,27 @@ const EventFormFields = ({ formData, handleInputChange, errors, onSubmit }) => {
             <label className="block text-sm font-medium text-text-primary mb-2">
               Start Time *
             </label>
-            <Input
-              type="time"
-              name="startTime"
-              value={formatTimeForInput(formData.startTime)}
-              onChange={handleInputChange}
-              required
-              className={errors.startTime ? 'border-error' : ''}
-            />
+            <div className={`relative ${errors.startTime ? 'border-error' : ''}`}>
+              <DatePicker
+                selected={formData.startTime ? new Date(`2000-01-01T${formData.startTime}`) : null}
+                onChange={(date) => {
+                  if (date) {
+                    const hours = date.getHours().toString().padStart(2, '0');
+                    const minutes = date.getMinutes().toString().padStart(2, '0');
+                    handleDateChange(`${hours}:${minutes}`, 'startTime');
+                  }
+                }}
+                showTimeSelect
+                showTimeSelectOnly
+                timeIntervals={15}
+                timeCaption="Time"
+                dateFormat="h:mm aa"
+                placeholderText="Select start time"
+                className="w-full px-3 py-2 glass border border-white/20 rounded-lg text-text-primary bg-transparent focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                required
+              />
+              <Icon name="Clock" size={16} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-text-secondary pointer-events-none" />
+            </div>
             {errors.startTime && (
               <p className="mt-1 text-sm text-error flex items-center">
                 <Icon name="AlertCircle" size={16} className="mr-1" />
@@ -90,15 +120,18 @@ const EventFormFields = ({ formData, handleInputChange, errors, onSubmit }) => {
             <label className="block text-sm font-medium text-text-primary mb-2">
               End Date *
             </label>
-            <Input
-              type="date"
-              name="endDate"
-              value={formatDateForInput(formData.endDate)}
-              onChange={handleInputChange}
-              required
-              min={formData.startDate || new Date().toISOString().split('T')[0]}
-              className={errors.endDate ? 'border-error' : ''}
-            />
+            <div className={`relative ${errors.endDate ? 'border-error' : ''}`}>
+              <DatePicker
+                selected={formData.endDate ? new Date(formData.endDate) : null}
+                onChange={(date) => handleDateChange(date, 'endDate')}
+                dateFormat="yyyy-MM-dd"
+                minDate={formData.startDate ? new Date(formData.startDate) : new Date()}
+                placeholderText="Select end date"
+                className="w-full px-3 py-2 glass border border-white/20 rounded-lg text-text-primary bg-transparent focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                required
+              />
+              <Icon name="Calendar" size={16} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-text-secondary pointer-events-none" />
+            </div>
             {errors.endDate && (
               <p className="mt-1 text-sm text-error flex items-center">
                 <Icon name="AlertCircle" size={16} className="mr-1" />
@@ -111,14 +144,27 @@ const EventFormFields = ({ formData, handleInputChange, errors, onSubmit }) => {
             <label className="block text-sm font-medium text-text-primary mb-2">
               End Time *
             </label>
-            <Input
-              type="time"
-              name="endTime"
-              value={formatTimeForInput(formData.endTime)}
-              onChange={handleInputChange}
-              required
-              className={errors.endTime ? 'border-error' : ''}
-            />
+            <div className={`relative ${errors.endTime ? 'border-error' : ''}`}>
+              <DatePicker
+                selected={formData.endTime ? new Date(`2000-01-01T${formData.endTime}`) : null}
+                onChange={(date) => {
+                  if (date) {
+                    const hours = date.getHours().toString().padStart(2, '0');
+                    const minutes = date.getMinutes().toString().padStart(2, '0');
+                    handleDateChange(`${hours}:${minutes}`, 'endTime');
+                  }
+                }}
+                showTimeSelect
+                showTimeSelectOnly
+                timeIntervals={15}
+                timeCaption="Time"
+                dateFormat="h:mm aa"
+                placeholderText="Select end time"
+                className="w-full px-3 py-2 glass border border-white/20 rounded-lg text-text-primary bg-transparent focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                required
+              />
+              <Icon name="Clock" size={16} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-text-secondary pointer-events-none" />
+            </div>
             {errors.endTime && (
               <p className="mt-1 text-sm text-error flex items-center">
                 <Icon name="AlertCircle" size={16} className="mr-1" />
@@ -129,6 +175,7 @@ const EventFormFields = ({ formData, handleInputChange, errors, onSubmit }) => {
         </div>
       </div>
 
+      {/* Rest of the form remains unchanged */}
       {/* Event Location */}
       <div>
         <label className="block text-sm font-medium text-text-primary mb-2">

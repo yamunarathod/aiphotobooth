@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Icon from '../../components/AppIcon';
+import { supabase } from '../../utils/supabase';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -34,6 +35,28 @@ const Login = () => {
     const result = await signInWithGoogle();
     
     if (result?.success) {
+      // Check if this is a new user and initialize trial if needed
+      try {
+        const { data, error } = await supabase
+          .from('user_trials')
+          .select('user_id')
+          .eq('user_id', result.user.id)
+          .single();
+          
+        if (error && error.code === 'PGRST116') {
+          // User doesn't exist in trials table, initialize them
+          await supabase
+            .from('user_trials')
+            .insert({
+              user_id: result.user.id,
+              has_used_trial: false,
+              trial_date: null
+            });
+        }
+      } catch (error) {
+        console.error('Error checking/initializing user trial:', error);
+      }
+      
       // Note: Google OAuth will redirect automatically
       // The redirect URL is handled in the auth service
     }

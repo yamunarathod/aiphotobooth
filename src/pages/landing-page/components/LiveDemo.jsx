@@ -4,6 +4,8 @@ import Icon from '../../../components/AppIcon';
 import Image from '../../../components/AppImage';
 import { v4 as uuidv4 } from 'uuid';
 import { supabase } from '../../../utils/supabase';
+import { useAuth } from '../../../contexts/AuthContext';
+import { Link } from 'react-router-dom';
 
 const LiveDemo = () => {
   const [uploadedImage, setUploadedImage] = useState(null);
@@ -13,7 +15,10 @@ const LiveDemo = () => {
   const [progress, setProgress] = useState(0);
   const [uploadError, setUploadError] = useState(null);
   const [uuid, setUuid] = useState('');
+  const [hasUsedTrial, setHasUsedTrial] = useState(false);
+  const [showSubscribePrompt, setShowSubscribePrompt] = useState(false);
   const fileInputRef = useRef(null);
+  const { currentUser } = useAuth();
 
   const styles = [
     { id: 'ghibli', name: 'Ghibli', color: 'emerald' },
@@ -147,8 +152,51 @@ const LiveDemo = () => {
     }
   };
 
+  useEffect(() => {
+    // Check if user has already used their trial
+    const checkTrialUsage = async () => {
+      if (currentUser?.uid) {
+        try {
+          // Query the database to check if user has used their trial
+          const { data, error } = await supabase
+            .from('user_trials')
+            .select('has_used_trial')
+            .eq('user_id', currentUser.uid)
+            .single();
+          
+          if (error && error.code !== 'PGRST116') {
+            console.error('Error checking trial usage:', error);
+            return;
+          }
+          
+          // If user exists in the table and has used their trial
+          if (data?.has_used_trial) {
+            setHasUsedTrial(true);
+          }
+        } catch (error) {
+          console.error('Error checking trial status:', error);
+        }
+      }
+    };
+    
+    checkTrialUsage();
+  }, [currentUser]);
+
   const processImage = async () => {
     if (!uploadedImage) return;
+
+    // Check if user is logged in
+    if (!currentUser) {
+      // Redirect to login or show login prompt
+      setShowSubscribePrompt(true);
+      return;
+    }
+    
+    // Check if user has already used their trial
+    if (hasUsedTrial) {
+      setShowSubscribePrompt(true);
+      return;
+    }
 
     setIsProcessing(true);
     setProgress(0);
@@ -160,8 +208,9 @@ const LiveDemo = () => {
       let workflow = await workflowResponse.json();
 
       // Update node 283 with UUID
-      workflow['283'].inputs.unique_id = uuid; // Corrected line
+      workflow['283'].inputs.unique_id = uuid;
       console.log(workflow);
+      
       // Send to Runpod
       const runpodResponse = await fetch('https://api.runpod.ai/v2/tdme3jq4u7zg1s/run', {
         method: 'POST',
@@ -194,6 +243,23 @@ const LiveDemo = () => {
 
           if (!error && data) {
             setProcessedImage(data.output);
+            
+            // Record that user has used their trial
+            if (currentUser?.uid) {
+              const { error: trialError } = await supabase
+                .from('user_trials')
+                .upsert({
+                  user_id: currentUser.uid,
+                  has_used_trial: true,
+                  trial_date: new Date().toISOString()
+                });
+                
+              if (trialError) {
+                console.error('Error recording trial usage:', trialError);
+              } else {
+                setHasUsedTrial(true);
+              }
+            }
           }
           setIsProcessing(false);
           clearInterval(statusInterval);
@@ -230,6 +296,75 @@ const LiveDemo = () => {
       }
     }
   };
+
+  // Subscription Prompt Component
+  const SubscriptionPrompt = () => (
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-8 border border-violet-500/30 max-w-md w-full">
+        <div className="text-center mb-6">
+          <div className="w-16 h-16 bg-gradient-to-br from-violet-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Icon name="Sparkles" size={32} color="white" />
+          </div>
+          <h3 className="text-2xl font-bold text-white mb-2">
+            {currentUser ? 'Trial Limit Reached' : 'Sign In to Continue'}
+          </h3>
+          <p className="text-slate-300">
+            {currentUser 
+              ? 'You used your free trial transformation. Subscribe to unlock unlimited transformations!'
+              : 'Create an account or sign in to get your free trial transformation.'}
+          </p>
+        </div>
+        
+        <div className="space-y-4">
+          {currentUser ? (
+            <Link to="/pricing">
+              <Button
+                variant="primary"
+                size="lg"
+                className="w-full bg-gradient-to-r from-violet-500 to-purple-600"
+                iconName="CreditCard"
+                iconPosition="left"
+              >
+                View Subscription Plans
+              </Button>
+            </Link>
+          ) : (
+            <>
+              <Link to="/signup">
+                <Button
+                  variant="primary"
+                  size="lg"
+                  className="w-full bg-gradient-to-r from-violet-500 to-purple-600"
+                  iconName="UserPlus"
+                  iconPosition="left"
+                >
+                  Create Free Account
+                </Button>
+              </Link>
+              <Link to="/login">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="w-full border-slate-600"
+                  iconName="LogIn"
+                  iconPosition="left"
+                >
+                  Sign In
+                </Button>
+              </Link>
+            </>
+          )}
+          
+          <button
+            onClick={() => setShowSubscribePrompt(false)}
+            className="w-full text-slate-400 hover:text-slate-300 text-sm mt-4"
+          >
+            Maybe Later
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <section className="py-20 bg-gradient-to-b from-[#1a1a2e] to-[#0f0f23]">
@@ -358,11 +493,19 @@ const LiveDemo = () => {
                 size="lg"
                 onClick={processImage}
                 disabled={!uploadedImage || isProcessing}
-                iconName={isProcessing ? "Loader" : "Sparkles"}
+                iconName={isProcessing ? "Loader" : hasUsedTrial ? "Lock" : "Sparkles"}
                 iconPosition="left"
-                className="w-full bg-gradient-to-r from-violet-500 to-purple-600"
+                className={`w-full ${
+                  hasUsedTrial 
+                    ? "bg-gradient-to-r from-slate-600 to-slate-700" 
+                    : "bg-gradient-to-r from-violet-500 to-purple-600"
+                }`}
               >
-                {isProcessing ? 'Transforming...' : 'Transform with AI'}
+                {isProcessing 
+                  ? 'Transforming...' 
+                  : hasUsedTrial 
+                    ? 'Subscribe to Transform More' 
+                    : 'Transform with AI'}
               </Button>
             </div>
 

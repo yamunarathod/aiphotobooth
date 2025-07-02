@@ -64,55 +64,6 @@ const EventSummary = ({ formData, selectedStyles, subscriptionPlan }) => {
     return selectedStyles.map(styleId => styleMap[styleId] || styleId);
   };
 
-  const summaryItems = [
-    {
-      icon: 'Calendar',
-      label: 'Event Name',
-      value: formData.eventName || 'Not specified',
-      important: true
-    },
-    {
-      icon: 'Clock',
-      label: 'Start Date & Time',
-      value: formData.startDate && formData.startTime 
-        ? `${formatDate(formData.startDate)} at ${formatTime(formData.startTime)}`
-        : 'Not specified'
-    },
-    {
-      icon: 'Clock',
-      label: 'End Date & Time',
-      value: formData.endDate && formData.endTime 
-        ? `${formatDate(formData.endDate)} at ${formatTime(formData.endTime)}`
-        : 'Not specified'
-    },
-    {
-      icon: 'Timer',
-      label: 'Duration',
-      value: calculateDuration()
-    },
-    {
-      icon: 'MapPin',
-      label: 'Location',
-      value: formData.location || 'Not specified'
-    },
-    {
-      icon: 'FileText',
-      label: 'Description',
-      value: formData.description || 'No description provided'
-    },
-    {
-      icon: 'Palette',
-      label: 'Selected Styles',
-      value: selectedStyles.length > 0 ? getStyleNames().join(', ') : 'No styles selected',
-      important: true
-    },
-    {
-      icon: 'Crown',
-      label: 'Subscription Plan',
-      value: subscriptionPlan || 'Unknown'
-    }
-  ];
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -126,81 +77,169 @@ const EventSummary = ({ formData, selectedStyles, subscriptionPlan }) => {
         </p>
       </div>
 
-      {/* Summary Card */}
+      {/* Summary Card - Redesigned Layout */}
       <div className="glass rounded-lg border border-white/20 overflow-hidden">
-        <div className="p-6 space-y-4">
-          {summaryItems.map((item, index) => (
-            <div key={index} className="flex items-start space-x-3">
-              <div className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${
-                item.important ? 'bg-primary/20 text-primary' : 'bg-surface text-text-secondary'
-              }`}>
-                <Icon name={item.icon} size={16} />
+        {/* Event Name - Highlighted at the top */}
+        <div className="p-3 border-b border-white/20 bg-primary/10">
+          <div className="flex items-center space-x-2">
+            <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-primary/20 text-primary flex items-center justify-center">
+              <Icon name="Calendar" size={16} />
+            </div>
+            <div className="overflow-hidden">
+              <p className="text-xs font-medium text-text-secondary">Event Name</p>
+              <h4 className="text-base font-semibold text-text-primary truncate">
+                {formData.eventName || 'Not specified'}
+              </h4>
+            </div>
+          </div>
+        </div>
+
+        {/* Date and Time Section */}
+        <div className="p-3 border-b border-white/20">
+          <h5 className="text-sm font-medium text-text-primary mb-2 flex items-center">
+            <Icon name="Clock" size={14} className="mr-1 text-primary" />
+            Date & Time Details
+          </h5>
+          
+          <div className="grid grid-cols-1 gap-2">
+            <div className="glass rounded-md p-2 bg-surface/30">
+              <p className="text-xs text-text-secondary">Start</p>
+              <p className="text-sm font-medium text-text-primary">
+                {formData.startDate && formData.startTime 
+                  ? `${formatDate(formData.startDate)} at ${formatTime(formData.startTime)}`
+                  : 'Not specified'}
+              </p>
+            </div>
+            
+            <div className="glass rounded-md p-2 bg-surface/30">
+              <p className="text-xs text-text-secondary">End</p>
+              <p className="text-sm font-medium text-text-primary">
+                {formData.endDate && formData.endTime 
+                  ? `${formatDate(formData.endDate)} at ${formatTime(formData.endTime)}`
+                  : 'Not specified'}
+              </p>
+            </div>
+          
+            <div className="glass rounded-md p-2 bg-primary/5 flex items-center">
+              <Icon name="Timer" size={14} className="text-primary mr-1 flex-shrink-0" />
+              <div className="overflow-hidden">
+                <p className="text-xs text-text-secondary">Duration</p>
+                <p className="text-sm font-medium text-text-primary">{calculateDuration()}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Location and Description */}
+        <div className="p-3 border-b border-white/20">
+          <div className="space-y-2">
+            <div className="flex items-start space-x-2">
+              <div className="flex-shrink-0 w-6 h-6 rounded-lg bg-surface text-text-secondary flex items-center justify-center mt-1">
+                <Icon name="MapPin" size={14} />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-text-primary">{item.label}</p>
-                <p className={`text-sm mt-1 ${
-                  item.important ? 'text-text-primary font-medium' : 'text-text-secondary'
-                }`}>
-                  {item.value}
+                <p className="text-xs font-medium text-text-secondary">Location</p>
+                <p className="text-sm text-text-primary truncate">
+                  {formData.location || 'Not specified'}
                 </p>
               </div>
             </div>
-          ))}
+            
+            <div className="flex items-start space-x-2">
+              <div className="flex-shrink-0 w-6 h-6 rounded-lg bg-surface text-text-secondary flex items-center justify-center mt-1">
+                <Icon name="FileText" size={14} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-medium text-text-secondary">Description</p>
+                <p className="text-sm text-text-primary line-clamp-2">
+                  {formData.description || 'No description provided'}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Styles and Subscription */}
+        <div className="p-3 border-b border-white/20">
+          <h5 className="text-sm font-medium text-text-primary mb-2 flex items-center">
+            <Icon name="Palette" size={14} className="mr-1 text-primary" />
+            Styles & Subscription
+          </h5>
+          
+          <div className="glass rounded-md p-2 bg-primary/5 mb-2">
+            <p className="text-xs text-text-secondary">Selected Styles</p>
+            <p className="text-sm font-medium text-text-primary line-clamp-1">
+              {selectedStyles.length > 0 ? getStyleNames().join(', ') : 'No styles selected'}
+            </p>
+          </div>
+          
+          <div className="glass rounded-md p-2 bg-surface/30 flex items-center">
+            <div className="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center mr-1">
+              <Icon name="Crown" size={12} />
+            </div>
+            <div>
+              <p className="text-xs text-text-secondary">Subscription Plan</p>
+              <p className="text-sm font-medium text-text-primary">{subscriptionPlan || 'Unknown'}</p>
+            </div>
+          </div>
         </div>
 
         {/* License Info */}
-        <div className="border-t border-white/20 bg-primary/5 p-4">
-          <div className="flex items-center space-x-2 mb-2">
-            <Icon name="Shield" size={16} className="text-primary" />
+        <div className="border-t border-white/20 bg-primary/5 p-3">
+          <div className="flex items-center space-x-1 mb-1">
+            <Icon name="Shield" size={14} className="text-primary" />
             <span className="text-sm font-medium text-text-primary">License Information</span>
           </div>
           <p className="text-xs text-text-secondary">
-            A JWT license key will be generated for this event configuration. The license will include all selected styles and event parameters for photobooth operation.
+            A JWT license key will be generated for this event configuration.
           </p>
         </div>
       </div>
 
       {/* Validation Status */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-text-secondary">Event Name</span>
-          <div className="flex items-center space-x-1">
-            <Icon 
-              name={formData.eventName ? "CheckCircle" : "XCircle"} 
-              size={16} 
-              className={formData.eventName ? "text-success" : "text-error"} 
-            />
-            <span className={formData.eventName ? "text-success" : "text-error"}>
-              {formData.eventName ? "Valid" : "Required"}
-            </span>
+      <div className="glass rounded-lg border border-white/20 p-3">
+        <h5 className="text-sm font-medium text-text-primary mb-2">Validation Status</h5>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-text-secondary text-xs">Event Name</span>
+            <div className="flex items-center space-x-1">
+              <Icon 
+                name={formData.eventName ? "CheckCircle" : "XCircle"} 
+                size={14} 
+                className={formData.eventName ? "text-success" : "text-error"} 
+              />
+              <span className={`text-xs ${formData.eventName ? "text-success" : "text-error"}`}>
+                {formData.eventName ? "Valid" : "Required"}
+              </span>
+            </div>
           </div>
-        </div>
 
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-text-secondary">Date & Time</span>
-          <div className="flex items-center space-x-1">
-            <Icon 
-              name={formData.startDate && formData.startTime && formData.endDate && formData.endTime ? "CheckCircle" : "XCircle"} 
-              size={16} 
-              className={formData.startDate && formData.startTime && formData.endDate && formData.endTime ? "text-success" : "text-error"} 
-            />
-            <span className={formData.startDate && formData.startTime && formData.endDate && formData.endTime ? "text-success" : "text-error"}>
-              {formData.startDate && formData.startTime && formData.endDate && formData.endTime ? "Valid" : "Required"}
-            </span>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-text-secondary">Date & Time</span>
+            <div className="flex items-center space-x-1">
+              <Icon 
+                name={formData.startDate && formData.startTime && formData.endDate && formData.endTime ? "CheckCircle" : "XCircle"} 
+                size={16} 
+                className={formData.startDate && formData.startTime && formData.endDate && formData.endTime ? "text-success" : "text-error"} 
+              />
+              <span className={formData.startDate && formData.startTime && formData.endDate && formData.endTime ? "text-success" : "text-error"}>
+                {formData.startDate && formData.startTime && formData.endDate && formData.endTime ? "Valid" : "Required"}
+              </span>
+            </div>
           </div>
-        </div>
 
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-text-secondary">AI Styles</span>
-          <div className="flex items-center space-x-1">
-            <Icon 
-              name={selectedStyles.length > 0 ? "CheckCircle" : "XCircle"} 
-              size={16} 
-              className={selectedStyles.length > 0 ? "text-success" : "text-error"} 
-            />
-            <span className={selectedStyles.length > 0 ? "text-success" : "text-error"}>
-              {selectedStyles.length > 0 ? `${selectedStyles.length} Selected` : "Required"}
-            </span>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-text-secondary">AI Styles</span>
+            <div className="flex items-center space-x-1">
+              <Icon 
+                name={selectedStyles.length > 0 ? "CheckCircle" : "XCircle"} 
+                size={16} 
+                className={selectedStyles.length > 0 ? "text-success" : "text-error"} 
+              />
+              <span className={selectedStyles.length > 0 ? "text-success" : "text-error"}>
+                {selectedStyles.length > 0 ? `${selectedStyles.length} Selected` : "Required"}
+              </span>
+            </div>
           </div>
         </div>
       </div>

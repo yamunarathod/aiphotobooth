@@ -11,46 +11,32 @@ const StyleSelector = ({
 }) => {
   const availableStyles = [
     {
-      id: 'vintage',
-      name: 'Vintage Classic',
-      description: 'Timeless sepia and vintage film effects',
-      preview: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=300&h=200&fit=crop',
+      id: 'Ghibli',
+      name: 'Ghibli',
+      description: 'Timeless sepia and ghibli film effects',
+      preview: 'https://res.cloudinary.com/dk1xqwr3g/image/upload/v1751373008/image_20250621_154501_q3uj8c.png',
       category: 'Classic'
     },
     {
-      id: 'modern',
-      name: 'Modern Glam',
+      id: 'pixar',
+      name: 'Pixar',
       description: 'Contemporary filters with vibrant colors',
-      preview: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=300&h=200&fit=crop',
+      preview: 'https://res.cloudinary.com/dk1xqwr3g/image/upload/v1751371138/image_20250621_163838_gowdyd.png',
       category: 'Modern'
     },
     {
-      id: 'artistic',
-      name: 'Artistic Portrait',
+      id: 'packaging',
+      name: 'Packaging',
       description: 'Professional portrait enhancement',
-      preview: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=200&fit=crop',
+      preview: 'https://res.cloudinary.com/dk1xqwr3g/image/upload/v1751373010/image_20250628_113955_vet6mk.png',
       category: 'Professional'
     },
     {
-      id: 'wedding',
-      name: 'Wedding Romance',
+      id: 'Faceswap',
+      name: 'Faceswap',
       description: 'Romantic soft focus and warm tones',
-      preview: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=300&h=200&fit=crop',
+      preview: 'https://res.cloudinary.com/dk1xqwr3g/image/upload/v1751371139/IMG_0787_ps9i2x.jpg',
       category: 'Wedding'
-    },
-    {
-      id: 'party',
-      name: 'Party Fun',
-      description: 'Bright, energetic party atmosphere',
-      preview: 'https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=300&h=200&fit=crop',
-      category: 'Party'
-    },
-    {
-      id: 'corporate',
-      name: 'Corporate Professional',
-      description: 'Clean, professional business look',
-      preview: 'https://images.unsplash.com/photo-1556157382-97eda2d62296?w=300&h=200&fit=crop',
-      category: 'Corporate'
     }
   ];
 
@@ -183,7 +169,7 @@ const StyleSelector = ({
                   {/* Category Badge */}
                   <div className="absolute top-2 left-2">
                     <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-background/80 text-text-primary">
-                      {style.category}
+                      {/* {style.category} */}
                     </span>
                   </div>
                 </div>

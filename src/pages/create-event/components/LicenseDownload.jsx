@@ -227,18 +227,7 @@ const LicenseDownload = ({ eventData, selectedStyles, onClose, onNewEvent }) => 
             </div>
 
             {/* Usage Instructions */}
-            <div className="bg-accent/10 rounded-lg p-4 border border-accent/20">
-              <h5 className="text-sm font-medium text-text-primary mb-2 flex items-center">
-                <Icon name="Info" size={16} className="mr-2 text-accent" />
-                How to Use Your License
-              </h5>
-              <ul className="text-xs text-text-secondary space-y-1">
-                <li>• Download the .lic file and transfer it to your photobooth device</li>
-                <li>• Or copy the license key and paste it directly into your photobooth app</li>
-                <li>• The license will automatically configure your selected AI styles</li>
-                <li>• License is valid for 1 year from generation date</li>
-              </ul>
-            </div>
+            
           </div>
         )}
       </div>
