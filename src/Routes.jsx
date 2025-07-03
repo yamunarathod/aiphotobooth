@@ -72,7 +72,7 @@ const Routes = () => {
             {/* Public routes */}
             <Route path="/" element={<LandingPage />} />
             <Route path="/landing-page" element={<LandingPage />} />
-            
+
             {/* Auth routes - redirect to home if already logged in */}
             <Route
               path="/login"
@@ -90,11 +90,11 @@ const Routes = () => {
                 </AuthRoute>
               }
             />
-                    <Route path="/subscription-management" element={<SubscriptionManagement />} />
-        <Route path="/event-management" element={<EventManagement />} />
-        <Route path="/create-event" element={<CreateEvent />} />
-        <Route path="/user-profile" element={<UserProfile />} />
-            
+            <Route path="/subscription-management" element={<SubscriptionManagement />} />
+            <Route path="/event-management" element={<EventManagement />} />
+            <Route path="/create-event" element={<CreateEvent />} />
+            <Route path="/user-profile" element={<UserProfile />} />
+
             {/* Protected routes - require authentication */}
             <Route
               path="/dashboard"
@@ -112,7 +112,7 @@ const Routes = () => {
                 </PrivateRoute>
               }
             />
-            
+
             {/* Catch all route */}
             <Route path="*" element={<NotFound />} />
           </RouterRoutes>

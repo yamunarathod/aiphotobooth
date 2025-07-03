@@ -2,9 +2,8 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import Button from '../../components/ui/Button';
-import Input from '../../components/ui/Input';
 import Icon from '../../components/AppIcon';
-import { supabase } from '../../utils/supabase';
+import Input from '../../components/ui/Input';
 
 const Signup = () => {
   const [formData, setFormData] = useState({
@@ -59,19 +58,7 @@ const Signup = () => {
     });
     
     if (result?.success) {
-      // Initialize user trial record
-      try {
-        await supabase
-          .from('user_trials')
-          .insert({
-            user_id: result.user.id,
-            has_used_trial: false,
-            trial_date: null
-          });
-      } catch (error) {
-        console.error('Error initializing user trial:', error);
-      }
-      
+      // With the database trigger, user profile and trial records are created automatically.
       navigate('/');
     }
     

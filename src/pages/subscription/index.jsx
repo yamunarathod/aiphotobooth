@@ -17,32 +17,18 @@ const SubscriptionPage = () => {
   const { user, userProfile, signOut } = useAuth()
 
   // Function to get the correct database user ID
+// Function to get the correct database user ID
   const getDatabaseUserId = () => {
-    // Try to get the database UUID from userProfile first
-    if (userProfile?.id && userProfile.id !== user?.id) {
-      console.log('Using userProfile.id as database UUID:', userProfile.id)
-      return userProfile.id
+    // The user object from useAuth() provides the id from the auth.users table.
+    // Your database trigger ensures this ID exists in your public.users table.
+    if (user?.id) {
+      console.log('Using authenticated user ID:', user.id);
+      return user.id;
     }
-    
-    // Check if userProfile has a specific UUID field
-    if (userProfile?.uuid) {
-      console.log('Using userProfile.uuid:', userProfile.uuid)
-      return userProfile.uuid
-    }
-    
-    // Check if userProfile has database_id field
-    if (userProfile?.database_id) {
-      console.log('Using userProfile.database_id:', userProfile.database_id)
-      return userProfile.database_id
-    }
-    
-    // For your specific case, hardcode the known UUID
-    // TODO: Replace this with dynamic lookup once you fix the ID mapping
-    const knownDatabaseUUID = "190a258b-f9f1-41d8-a34e-b30c5b381397"
-    console.log('Using hardcoded database UUID:', knownDatabaseUUID)
-    console.log('Auth user ID for reference:', user?.id)
-    
-    return knownDatabaseUUID
+
+    // This case should ideally not be hit if a user is logged in.
+    console.error("Could not determine user ID.");
+    return null;
   }
 
   const handleLogout = async () => {
