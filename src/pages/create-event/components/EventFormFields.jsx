@@ -242,15 +242,28 @@ const EventFormFields = ({ formData, handleInputChange, errors, onSubmit }) => {
 
 const calculateDuration = (startDate, startTime, endDate, endTime) => {
   try {
-    const start = new Date(`${startDate}T${startTime}`);
-    const end = new Date(`${endDate}T${endTime}`);
+    // Handle Date objects or strings for dates
+    const startDateStr = startDate instanceof Date
+      ? startDate.toISOString().split('T')[0]
+      : startDate;
+    const endDateStr = endDate instanceof Date
+      ? endDate.toISOString().split('T')[0]
+      : endDate;
+
+    // If any field is missing, return
+    if (!startDateStr || !startTime || !endDateStr || !endTime) return 'Invalid duration';
+
+    const start = new Date(`${startDateStr}T${startTime}`);
+    const end = new Date(`${endDateStr}T${endTime}`);
+
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) return 'Invalid duration';
+
     const diffMs = end - start;
-    
     if (diffMs <= 0) return 'Invalid duration';
-    
+
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
     const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-    
+
     if (diffHours === 0) {
       return `${diffMinutes} minutes`;
     } else if (diffMinutes === 0) {

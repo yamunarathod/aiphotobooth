@@ -79,10 +79,11 @@ const EventSummary = ({ formData, selectedStyles, subscriptionPlan }) => {
 
       {/* Summary Card - Redesigned Layout */}
       <div className="glass rounded-lg border border-white/20 overflow-hidden">
-        {/* Event Name - Highlighted at the top */}
-        <div className="p-3 border-b border-white/20 bg-primary/10">
-          <div className="flex items-center space-x-2">
-            <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-primary/20 text-primary flex items-center justify-center">
+        {/* Top Section: Event Name & Date/Time Side by Side */}
+        <div className="flex flex-col md:flex-row">
+          {/* Event Name */}
+          <div className="md:w-1/2 border-b md:border-b-0 md:border-r border-white/20 bg-primary/10 p-3 flex items-center">
+            <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-primary/20 text-primary flex items-center justify-center mr-2">
               <Icon name="Calendar" size={16} />
             </div>
             <div className="overflow-hidden">
@@ -92,39 +93,28 @@ const EventSummary = ({ formData, selectedStyles, subscriptionPlan }) => {
               </h4>
             </div>
           </div>
-        </div>
-
-        {/* Date and Time Section */}
-        <div className="p-3 border-b border-white/20">
-          <h5 className="text-sm font-medium text-text-primary mb-2 flex items-center">
-            <Icon name="Clock" size={14} className="mr-1 text-primary" />
-            Date & Time Details
-          </h5>
-          
-          <div className="grid grid-cols-1 gap-2">
-            <div className="glass rounded-md p-2 bg-surface/30">
-              <p className="text-xs text-text-secondary">Start</p>
-              <p className="text-sm font-medium text-text-primary">
-                {formData.startDate && formData.startTime 
-                  ? `${formatDate(formData.startDate)} at ${formatTime(formData.startTime)}`
-                  : 'Not specified'}
-              </p>
-            </div>
-            
-            <div className="glass rounded-md p-2 bg-surface/30">
-              <p className="text-xs text-text-secondary">End</p>
-              <p className="text-sm font-medium text-text-primary">
-                {formData.endDate && formData.endTime 
-                  ? `${formatDate(formData.endDate)} at ${formatTime(formData.endTime)}`
-                  : 'Not specified'}
-              </p>
-            </div>
-          
-            <div className="glass rounded-md p-2 bg-primary/5 flex items-center">
-              <Icon name="Timer" size={14} className="text-primary mr-1 flex-shrink-0" />
-              <div className="overflow-hidden">
-                <p className="text-xs text-text-secondary">Duration</p>
-                <p className="text-sm font-medium text-text-primary">{calculateDuration()}</p>
+          {/* Date and Time Section */}
+          <div className="md:w-1/2 p-3">
+            <h5 className="text-sm font-medium text-text-primary mb-2 flex items-center">
+              <Icon name="Clock" size={14} className="mr-1 text-primary" />
+              Date & Time Details
+            </h5>
+            <div className="grid grid-cols-1 gap-2">
+              <div className="glass rounded-md p-2 bg-surface/30">
+                <p className="text-xs text-text-secondary">Start</p>
+                <p className="text-sm font-medium text-text-primary">
+                  {formData.startDate && formData.startTime 
+                    ? `${formatDate(formData.startDate)} at ${formatTime(formData.startTime)}`
+                    : 'Not specified'}
+                </p>
+              </div>
+              <div className="glass rounded-md p-2 bg-surface/30">
+                <p className="text-xs text-text-secondary">End</p>
+                <p className="text-sm font-medium text-text-primary">
+                  {formData.endDate && formData.endTime 
+                    ? `${formatDate(formData.endDate)} at ${formatTime(formData.endTime)}`
+                    : 'Not specified'}
+                </p>
               </div>
             </div>
           </div>
@@ -184,16 +174,7 @@ const EventSummary = ({ formData, selectedStyles, subscriptionPlan }) => {
           </div>
         </div>
 
-        {/* License Info */}
-        <div className="border-t border-white/20 bg-primary/5 p-3">
-          <div className="flex items-center space-x-1 mb-1">
-            <Icon name="Shield" size={14} className="text-primary" />
-            <span className="text-sm font-medium text-text-primary">License Information</span>
-          </div>
-          <p className="text-xs text-text-secondary">
-            A JWT license key will be generated for this event configuration.
-          </p>
-        </div>
+     
       </div>
 
       {/* Validation Status */}

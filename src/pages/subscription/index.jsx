@@ -13,11 +13,11 @@ const SubscriptionPage = () => {
   const [billingCycle, setBillingCycle] = useState("monthly")
   const [selectedPlan, setSelectedPlan] = useState("professional")
   const [isProcessing, setIsProcessing] = useState(false)
-  
+
   const { user, userProfile, signOut } = useAuth()
 
   // Function to get the correct database user ID
-// Function to get the correct database user ID
+  // Function to get the correct database user ID
   const getDatabaseUserId = () => {
     // The user object from useAuth() provides the id from the auth.users table.
     // Your database trigger ensures this ID exists in your public.users table.
@@ -50,8 +50,8 @@ const SubscriptionPage = () => {
       yearlyPrice: 39,
       transformsIncluded: 200,
       features: [
-        "200 AI transformations/month",
-        "12 art styles included",
+        "100 AI transformations/month",
+        "2 art styles included",
         "Basic customization",
         "Email support",
         "Social media sharing",
@@ -70,8 +70,8 @@ const SubscriptionPage = () => {
       yearlyPrice: 119,
       transformsIncluded: 1000,
       features: [
-        "1,000 AI transformations/month",
-        "24+ art styles included",
+        "500 AI transformations/month",
+        "4+ art styles included",
         "Full brand customization",
         "Priority support",
         "Advanced sharing options",
@@ -136,7 +136,7 @@ const SubscriptionPage = () => {
     const name = getUserDisplayName()
     const email = getUserEmail()
     const baseAmount = calculatePrice(plan) * getEventSizeMultiplier()
-    
+
     // Get the correct database user ID
     const databaseUserId = getDatabaseUserId()
     const authUserId = user?.id
@@ -175,7 +175,7 @@ const SubscriptionPage = () => {
       } catch (error) {
         console.error('Error logging enterprise inquiry:', error)
       }
-      
+
       alert("We'll contact you soon. Or reach out to sales@magicai.com.")
       return
     }
@@ -207,20 +207,20 @@ const SubscriptionPage = () => {
         onSuccess: (response) => {
           console.log("Payment successful:", response)
           setIsProcessing(false)
-          
+
           // Show success message with more details
           alert(`Payment successful! 
 Subscription: ${plan.name} (${billingCycle})
 Payment ID: ${response.razorpay_payment_id}
 Your subscription is now active!`)
-          
+
           // Redirect to dashboard
           navigate("/dashboard")
         },
         onFailure: (error) => {
           console.error("Payment failed:", error)
           setIsProcessing(false)
-          
+
           // Show more descriptive error message
           const errorMessage = error.description || "Payment failed. Please try again."
           alert(`Payment Failed: ${errorMessage}`)
@@ -358,17 +358,15 @@ Your subscription is now active!`)
             <div className="bg-slate-800/50 rounded-lg p-1 border border-slate-600">
               <button
                 onClick={() => setBillingCycle("monthly")}
-                className={`px-6 py-2 rounded-md transition-all duration-300 ${
-                  billingCycle === "monthly" ? "bg-violet-500 text-white" : "text-slate-400 hover:text-white"
-                }`}
+                className={`px-6 py-2 rounded-md transition-all duration-300 ${billingCycle === "monthly" ? "bg-violet-500 text-white" : "text-slate-400 hover:text-white"
+                  }`}
               >
                 Monthly
               </button>
               <button
                 onClick={() => setBillingCycle("yearly")}
-                className={`px-6 py-2 rounded-md transition-all duration-300 relative ${
-                  billingCycle === "yearly" ? "bg-violet-500 text-white" : "text-slate-400 hover:text-white"
-                }`}
+                className={`px-6 py-2 rounded-md transition-all duration-300 relative ${billingCycle === "yearly" ? "bg-violet-500 text-white" : "text-slate-400 hover:text-white"
+                  }`}
               >
                 Yearly
                 <span className="absolute -top-2 -right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">
@@ -383,13 +381,12 @@ Your subscription is now active!`)
             {plans.map((plan) => (
               <div
                 key={plan.id}
-                className={`relative bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-2xl p-8 border transition-all duration-300 ${
-                  plan.popular
+                className={`relative bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-2xl p-8 border transition-all duration-300 ${plan.popular
                     ? "border-violet-500 scale-105 shadow-2xl shadow-violet-500/20"
                     : selectedPlan === plan.id
                       ? "border-violet-500/50"
                       : "border-slate-700/50 hover:border-slate-600"
-                }`}
+                  }`}
                 onClick={() => setSelectedPlan(plan.id)}
               >
                 {plan.popular && (
@@ -457,16 +454,15 @@ Your subscription is now active!`)
                   variant={plan.popular ? "primary" : "outline"}
                   size="lg"
                   disabled={isProcessing}
-                  className={`w-full ${
-                    plan.popular
+                  className={`w-full ${plan.popular
                       ? "bg-gradient-to-r from-violet-500 to-purple-600"
                       : "border-violet-400 text-violet-400 hover:bg-violet-500/10"
-                  } ${isProcessing ? "opacity-50 cursor-not-allowed" : ""}`}
+                    } ${isProcessing ? "opacity-50 cursor-not-allowed" : ""}`}
                   iconName={isProcessing ? "Loader" : (plan.id === "enterprise" ? "Phone" : "CreditCard")}
                   iconPosition="left"
                 >
-                  {isProcessing 
-                    ? "Processing..." 
+                  {isProcessing
+                    ? "Processing..."
                     : (plan.id === "enterprise" ? "Contact Sales" : "Choose Plan")
                   }
                 </Button>

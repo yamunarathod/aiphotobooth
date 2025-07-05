@@ -9,8 +9,15 @@ import StyleSelector from '../create-event/components/StyleSelector';
 import EventSummary from '../create-event/components/EventSummary';
 import LicenseDownload from '../create-event/components/LicenseDownload';
 
+
 const Dashboard = () => {
   const { user, userProfile, signOut } = useAuth();
+
+
+  // View and download states
+  const [viewingEvent, setViewingEvent] = useState(null);
+  const [downloadingEvent, setDownloadingEvent] = useState(null);
+  const [isDownloading, setIsDownloading] = useState(false);
   const navigate = useNavigate();
 
   // Loading and data states
@@ -42,7 +49,7 @@ const Dashboard = () => {
       transformsUsed: 0,
     }
   };
-  
+
   // Fetch subscription and events data on component mount
   useEffect(() => {
     if (!user?.id) {
@@ -50,6 +57,8 @@ const Dashboard = () => {
       return;
     }
 
+
+    // Updated fetchDashboardData function
     const fetchDashboardData = async () => {
       setIsLoading(true);
       try {
@@ -63,21 +72,19 @@ const Dashboard = () => {
           .limit(1)
           .single();
 
-        if (subError && subError.code !== 'PGRST116') { // PGRST116 means no rows found, which is not an error here
+        if (subError && subError.code !== 'PGRST116') {
           throw subError;
         }
-        
+
         setSubscription(subData || noSubscription);
 
-        // Fetch user's events (optional, can be expanded)
-        // For now, we'll keep the local event state for events created in this session
-        // const { data: eventData, error: eventError } = await supabase.from('events')...
-        // if (eventError) throw eventError;
-        // setEvents(eventData);
+        // Fetch user's events from database
+        const eventsData = await fetchEventsFromDatabase();
+        setEvents(eventsData);
 
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
-        setSubscription(noSubscription); // Set to default on error
+        setSubscription(noSubscription);
       } finally {
         setIsLoading(false);
       }
@@ -93,7 +100,7 @@ const Dashboard = () => {
   const transformsUsed = subscription?.metadata?.transformsUsed ?? 0;
   const transformsIncluded = subscription?.metadata?.transformsIncluded ?? 0;
   const transformsRemaining = transformsIncluded - transformsUsed;
-  
+
   // Determine max styles based on plan name from metadata
   const getMaxStyles = () => {
     switch (planName.toLowerCase()) {
@@ -156,25 +163,74 @@ const Dashboard = () => {
     setStep('license');
   };
 
-  const handleLicenseDone = () => {
-    setEvents([
-      ...events,
-      { ...createdEvent, id: Date.now(), date: new Date().toLocaleString() }
-    ]);
-    setFormData({
-      eventName: '',
-      startDate: '',
-      startTime: '',
-      endDate: '',
-      endTime: '',
-      location: '',
-      description: ''
-    });
-    setSelectedStyles([]);
-    setCreatedEvent(null);
-    setStep(null);
-    setErrors({});
+
+
+  // Updated handleLicenseDone function
+  const handleLicenseDone = async () => {
+    try {
+      // Save event to database
+      const savedEvent = await saveEventToDatabase(createdEvent);
+
+      // Log the event details to console
+      console.log('=== EVENT CREATED ===');
+      console.log('Event Details:', {
+        id: savedEvent.id,
+        eventName: savedEvent.event_name,
+        startDate: savedEvent.start_date,
+        startTime: savedEvent.start_time,
+        endDate: savedEvent.end_date,
+        endTime: savedEvent.end_time,
+        location: savedEvent.location,
+        description: savedEvent.description,
+        selectedStyles: savedEvent.selected_styles,
+        subscriptionPlan: savedEvent.subscription_plan,
+        createdAt: savedEvent.created_at,
+        userId: savedEvent.user_id,
+        metadata: savedEvent.metadata
+      });
+
+      // Log selected styles details if any
+      if (savedEvent.selected_styles && savedEvent.selected_styles.length > 0) {
+        console.log('Selected AI Styles:', savedEvent.selected_styles);
+        console.log('Number of styles selected:', savedEvent.selected_styles.length);
+      }
+
+      // Log subscription info
+      console.log('Subscription Info:', {
+        planName: savedEvent.subscription_plan,
+        subscriptionId: savedEvent.subscription_id,
+        transformsUsed: transformsUsed,
+        transformsIncluded: transformsIncluded,
+        transformsRemaining: transformsRemaining
+      });
+
+      console.log('=== END EVENT LOG ===');
+
+      // Add to local events array (this will be replaced by fresh data from database)
+      setEvents(prevEvents => [savedEvent, ...prevEvents]);
+
+      // Reset form state
+      setFormData({
+        eventName: '',
+        startDate: '',
+        startTime: '',
+        endDate: '',
+        endTime: '',
+        location: '',
+        description: ''
+      });
+      setSelectedStyles([]);
+      setCreatedEvent(null);
+      setStep(null);
+      setErrors({});
+
+    } catch (error) {
+      console.error('Error creating event:', error);
+      alert('Failed to create event. Please try again.');
+    }
   };
+
+
 
   const handleBackToEdit = () => setStep('form');
   const handleBackToStyles = () => setStep('styles');
@@ -184,11 +240,205 @@ const Dashboard = () => {
     if (result?.success) navigate('/');
   };
 
+
+  // Function to save event to database
+  const saveEventToDatabase = async (eventData) => {
+    try {
+      const licenseKey = generateLicenseKey({ id: Date.now().toString() });
+      
+      const eventToSave = {
+        user_id: user.id,
+        event_name: eventData.eventName,
+        start_date: eventData.startDate,
+        start_time: eventData.startTime,
+        end_date: eventData.endDate,
+        end_time: eventData.endTime,
+        location: eventData.location || '',
+        description: eventData.description || '',
+        selected_styles: eventData.selectedStyles || [],
+        subscription_plan: eventData.subscriptionPlan || 'No Plan',
+        subscription_id: subscription?.id || null,
+        license_key: licenseKey,
+        license_generated_at: new Date().toISOString(),
+        status: 'active',
+        metadata: {
+          transformsUsedAtCreation: transformsUsed,
+          transformsIncludedAtCreation: transformsIncluded,
+          userEmail: user.email,
+          userName: userProfile?.username || userProfile?.full_name || 'Unknown'
+        }
+      };
+
+      console.log('Saving event to database:', eventToSave);
+
+      const { data, error } = await supabase
+        .from('events')
+        .insert([eventToSave])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error saving event:', error);
+        throw error;
+      }
+
+      console.log('Event saved successfully:', data);
+      return data;
+    } catch (error) {
+      console.error('Failed to save event to database:', error);
+      throw error;
+    }
+  };
+
+   const generateLicenseKey = (eventData) => {
+    const timestamp = new Date().getTime();
+    const eventId = eventData.id.slice(0, 8);
+    const userId = user.id.slice(0, 8);
+    const randomString = Math.random().toString(36).substring(2, 8).toUpperCase();
+    return `MPB-${eventId}-${userId}-${randomString}-${timestamp}`;
+  };
+
+  // Function to update license key for existing event
+  const updateLicenseKey = async (eventId) => {
+    try {
+      const newLicenseKey = generateLicenseKey({ id: eventId });
+      
+      const { data, error } = await supabase
+        .from('events')
+        .update({
+          license_key: newLicenseKey,
+          license_generated_at: new Date().toISOString()
+        })
+        .eq('id', eventId)
+        .eq('user_id', user.id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error updating license key:', error);
+        throw error;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Failed to update license key:', error);
+      throw error;
+    }
+  };
+
+  const downloadLicense = (eventData) => {
+    const licenseContent = ` `.trim();
+
+    const blob = new Blob([licenseContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `MPB_License_${eventData.event_name.replace(/[^a-zA-Z0-9]/g, '_')}_${eventData.start_date}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+
+    const fetchEventDetails = async (eventId) => {
+    try {
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .eq('id', eventId)
+        .eq('user_id', user.id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching event details:', error);
+        throw error;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Failed to fetch event details:', error);
+      throw error;
+    }
+  };
+
+
+  const handleViewEvent = async (eventId) => {
+    try {
+      const eventDetails = await fetchEventDetails(eventId);
+      setViewingEvent(eventDetails);
+      console.log('Viewing event details:', eventDetails);
+    } catch (error) {
+      console.error('Error viewing event:', error);
+      alert('Failed to load event details. Please try again.');
+    }
+  };
+
+
+  // Handle download license
+  const handleDownloadLicense = async (eventId) => {
+    try {
+      setIsDownloading(true);
+      setDownloadingEvent(eventId);
+      
+      // Fetch current event details
+      const eventDetails = await fetchEventDetails(eventId);
+      
+      // Update license key (generate new one each time)
+      const updatedEvent = await updateLicenseKey(eventId);
+      
+      // Download the license
+      downloadLicense(updatedEvent);
+      
+      // Update local events array with new license info
+      setEvents(prevEvents => 
+        prevEvents.map(event => 
+          event.id === eventId 
+            ? { ...event, license_key: updatedEvent.license_key, license_generated_at: updatedEvent.license_generated_at }
+            : event
+        )
+      );
+      
+      console.log('License downloaded successfully:', updatedEvent.license_key);
+      
+    } catch (error) {
+      console.error('Error downloading license:', error);
+      alert('Failed to download license. Please try again.');
+    } finally {
+      setIsDownloading(false);
+      setDownloadingEvent(null);
+    }
+  };
+
+
+  // Add this new function to fetch events from database
+  const fetchEventsFromDatabase = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching events:', error);
+        throw error;
+      }
+
+      console.log('Fetched events from database:', data);
+      return data || [];
+    } catch (error) {
+      console.error('Failed to fetch events from database:', error);
+      return [];
+    }
+  };
+
+
   if (isLoading) {
     return (
-        <div className="min-h-screen bg-gradient-to-b from-[#0f0f23] to-[#1a1a2e] flex items-center justify-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-violet-500"></div>
-        </div>
+      <div className="min-h-screen bg-gradient-to-b from-[#0f0f23] to-[#1a1a2e] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-violet-500"></div>
+      </div>
     );
   }
 
@@ -242,49 +492,49 @@ const Dashboard = () => {
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50">
-              <div className="flex items-center justify-between mb-4">
-                  <div className="bg-violet-500/20 rounded-lg p-3">
-                      <Icon name="Sparkles" size={24} className="text-violet-400" />
-                  </div>
+            <div className="flex items-center justify-between mb-4">
+              <div className="bg-violet-500/20 rounded-lg p-3">
+                <Icon name="Sparkles" size={24} className="text-violet-400" />
               </div>
-              <div className="mb-2">
-                  <span className="text-2xl font-bold text-white">{transformsUsed}</span>
-                  <span className="text-slate-400 text-sm ml-2">/ {transformsIncluded}</span>
-              </div>
-              <p className="text-slate-400 text-sm">Transformations Used</p>
+            </div>
+            <div className="mb-2">
+              <span className="text-2xl font-bold text-white">{transformsUsed}</span>
+              <span className="text-slate-400 text-sm ml-2">/ {transformsIncluded}</span>
+            </div>
+            <p className="text-slate-400 text-sm">Transformations Used</p>
           </div>
           <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50">
-              <div className="flex items-center justify-between mb-4">
-                  <div className="bg-violet-500/20 rounded-lg p-3">
-                      <Icon name="Calendar" size={24} className="text-violet-400" />
-                  </div>
+            <div className="flex items-center justify-between mb-4">
+              <div className="bg-violet-500/20 rounded-lg p-3">
+                <Icon name="Calendar" size={24} className="text-violet-400" />
               </div>
-              <div className="mb-2">
-                  <span className="text-2xl font-bold text-white">{events.length}</span>
-              </div>
-              <p className="text-slate-400 text-sm">Events This Month</p>
+            </div>
+            <div className="mb-2">
+              <span className="text-2xl font-bold text-white">{events.length}</span>
+            </div>
+            <p className="text-slate-400 text-sm">Events This Month</p>
           </div>
           <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50">
-              <div className="flex items-center justify-between mb-4">
-                  <div className="bg-violet-500/20 rounded-lg p-3">
-                      <Icon name="Users" size={24} className="text-violet-400" />
-                  </div>
+            <div className="flex items-center justify-between mb-4">
+              <div className="bg-violet-500/20 rounded-lg p-3">
+                <Icon name="Users" size={24} className="text-violet-400" />
               </div>
-              <div className="mb-2">
-                  <span className="text-2xl font-bold text-white">0</span>
-              </div>
-              <p className="text-slate-400 text-sm">Total Guests Served</p>
+            </div>
+            <div className="mb-2">
+              <span className="text-2xl font-bold text-white">0</span>
+            </div>
+            <p className="text-slate-400 text-sm">Total Guests Served</p>
           </div>
           <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50">
-              <div className="flex items-center justify-between mb-4">
-                  <div className="bg-violet-500/20 rounded-lg p-3">
-                      <Icon name="Download" size={24} className="text-violet-400" />
-                  </div>
+            <div className="flex items-center justify-between mb-4">
+              <div className="bg-violet-500/20 rounded-lg p-3">
+                <Icon name="Download" size={24} className="text-violet-400" />
               </div>
-              <div className="mb-2">
-                  <span className="text-2xl font-bold text-white">0</span>
-              </div>
-              <p className="text-slate-400 text-sm">Photos Downloaded</p>
+            </div>
+            <div className="mb-2">
+              <span className="text-2xl font-bold text-white">0</span>
+            </div>
+            <p className="text-slate-400 text-sm">Photos Downloaded</p>
           </div>
         </div>
 
@@ -312,20 +562,24 @@ const Dashboard = () => {
                 {events.length === 0 ? (
                   <div className="text-slate-400 text-center py-8">No events yet. Click "New Event" to create one.</div>
                 ) : (
-                  events.map((activity) => (
+                  events.map((event) => (
                     <div
-                      key={activity.id}
+                      key={event.id}
                       className="flex items-center justify-between p-4 bg-slate-700/30 rounded-lg border border-slate-600/50 hover:border-violet-500/50 transition-colors"
                     >
                       <div className="flex-1">
-                        <h4 className="text-white font-medium mb-1">{activity.eventName}</h4>
-                        <p className="text-slate-400 text-sm mb-2">{activity.date}</p>
+                        <h4 className="text-white font-medium mb-1">{event.event_name || event.eventName}</h4>
+                        <p className="text-slate-400 text-sm mb-2">
+                          {new Date(event.created_at).toLocaleString()}
+                        </p>
                         <div className="flex items-center space-x-4 text-xs text-slate-500">
                           <span>
-                            {activity.selectedStyles?.length || 0} styles
+                            {event.selected_styles?.length || 0} styles
                           </span>
                           <span>•</span>
-                          <span>{activity.location}</span>
+                          <span>{event.location}</span>
+                          <span>•</span>
+                          <span>{event.start_date} at {event.start_time}</span>
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
@@ -333,16 +587,19 @@ const Dashboard = () => {
                           variant="outline"
                           size="sm"
                           className="border-slate-600 text-slate-300"
+                          onClick={() => handleViewEvent(event.id)}
                         >
                           View
                         </Button>
-                        <Button
+                       <Button
                           variant="outline"
                           size="sm"
-                          className="border-violet-400 text-violet-400"
+                          className="border-violet-400 text-violet-400 disabled:opacity-50"
                           iconName="Download"
+                          onClick={() => handleDownloadLicense(event.id)}
+                          disabled={isDownloading && downloadingEvent === event.id}
                         >
-                          Download
+                          {isDownloading && downloadingEvent === event.id ? 'Downloading...' : 'Download'}
                         </Button>
                       </div>
                     </div>
@@ -431,24 +688,24 @@ const Dashboard = () => {
           </div>
         )}
         {step === 'summary' && createdEvent && (
-            <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-                <div className="bg-slate-900 rounded-xl p-8 w-full max-w-lg relative">
-                    <button className="absolute top-4 right-4 text-white" onClick={() => setStep(null)}><Icon name="X" size={20} /></button>
-                    <EventSummary formData={createdEvent} selectedStyles={createdEvent.selectedStyles} subscriptionPlan={createdEvent.subscriptionPlan} />
-                    <div className="mt-6 flex justify-between">
-                        <Button variant="ghost" onClick={handleBackToStyles}>Back</Button>
-                        <Button variant="primary" onClick={handleNextFromSummary}>Create & Generate License</Button>
-                    </div>
-                </div>
+          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+            <div className="bg-slate-900 rounded-xl p-8 w-full max-w-lg relative">
+              <button className="absolute top-4 right-4 text-white" onClick={() => setStep(null)}><Icon name="X" size={20} /></button>
+              <EventSummary formData={createdEvent} selectedStyles={createdEvent.selectedStyles} subscriptionPlan={createdEvent.subscriptionPlan} />
+              <div className="mt-6 flex justify-between">
+                <Button variant="ghost" onClick={handleBackToStyles}>Back</Button>
+                <Button variant="primary" onClick={handleNextFromSummary}>Create & Generate License</Button>
+              </div>
             </div>
+          </div>
         )}
         {step === 'license' && createdEvent && (
-            <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-                <div className="bg-slate-900 rounded-xl p-8 w-full max-w-lg relative">
-                    <button className="absolute top-4 right-4 text-white" onClick={handleLicenseDone}><Icon name="X" size={20} /></button>
-                    <LicenseDownload eventData={createdEvent} selectedStyles={createdEvent.selectedStyles} onClose={handleLicenseDone} onNewEvent={() => { handleLicenseDone(); handleCreateEventClick(); }} />
-                </div>
+          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+            <div className="bg-slate-900 rounded-xl p-8 w-full max-w-lg relative">
+              <button className="absolute top-4 right-4 text-white" onClick={handleLicenseDone}><Icon name="X" size={20} /></button>
+              <LicenseDownload eventData={createdEvent} selectedStyles={createdEvent.selectedStyles} onClose={handleLicenseDone} onNewEvent={() => { handleLicenseDone(); handleCreateEventClick(); }} />
             </div>
+          </div>
         )}
       </main>
     </div>

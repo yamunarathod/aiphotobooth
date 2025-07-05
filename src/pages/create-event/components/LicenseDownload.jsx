@@ -207,106 +207,115 @@ const LicenseDownload = ({ eventData, selectedStyles, onClose, onNewEvent }) => 
 
 
   return (
-    <div className="bg-gray-900 text-white p-8 max-w-2xl mx-auto rounded-lg shadow-2xl space-y-6">
-      {/* Success Header */}
-      <div className="text-center">
-        <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center">
-          <Icon name="CheckCircle" size={32} color="white" />
+    <div
+      className="bg-gray-900 text-white p-8 max-w-2xl mx-auto rounded-lg shadow-2xl space-y-6"
+      style={{
+        maxHeight: '90vh',
+        overflowY: 'auto',
+        scrollbarWidth: 'none',        // Firefox
+        msOverflowStyle: 'none'        // IE and Edge
+      }}
+    >
+      <style>
+        {`
+          .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+          }
+        `}
+      </style>
+      <div className="hide-scrollbar overflow-y-auto space-y-4">
+        {/* Success Header */}
+        <div className="text-center">
+          {/* Removed the green circle */}
+          <h3 className="text-2xl font-semibold text-white mb-2">Event Created Successfully!</h3>
         </div>
-        <h3 className="text-2xl font-semibold text-white mb-2">Event Created Successfully!</h3>
-        <p className="text-gray-400">
-          Your photobooth event has been configured. Generate and download your license key below.
-        </p>
-      </div>
 
-      {/* Event Summary Card */}
-      <div className="bg-gray-800 bg-opacity-50 rounded-lg border border-gray-700 p-6">
-        <h4 className="text-lg font-semibold text-white mb-4 flex items-center">
-          <Icon name="Calendar" size={20} className="mr-2 text-blue-400" />
-          Event Details
-        </h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-          <div>
-            <span className="text-gray-400">Event Name:</span>
-            <p className="text-white font-medium">{eventData.eventName}</p>
-          </div>
-          <div>
-            <span className="text-gray-400">Duration:</span>
-            <p className="text-white font-medium">
-              {formatDateTime(eventData.startDate, eventData.startTime)} - {formatDateTime(eventData.endDate, eventData.endTime)}
-            </p>
-          </div>
-          {eventData.location && (
+        {/* Event Summary Card */}
+        <div className="bg-gray-800 bg-opacity-50 rounded-lg border border-gray-700 p-6">
+          <h4 className="text-lg font-semibold text-white mb-4 flex items-center">
+            Event Details
+          </h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div>
-              <span className="text-gray-400">Location:</span>
-              <p className="text-white font-medium">{eventData.location}</p>
+              <span className="text-gray-400">Event Name:</span>
+              <p className="text-white font-medium">{eventData.eventName}</p>
             </div>
-          )}
-          <div>
-            <span className="text-gray-400">Selected Styles:</span>
-            <p className="text-white font-medium">{selectedStyles.join(', ')}</p>
+            <div>
+              <span className="text-gray-400">Duration:</span>
+              <p className="text-white font-medium">
+                {formatDateTime(eventData.startDate, eventData.startTime)} - {formatDateTime(eventData.endDate, eventData.endTime)}
+              </p>
+            </div>
+            {eventData.location && (
+              <div>
+                <span className="text-gray-400">Location:</span>
+                <p className="text-white font-medium">{eventData.location}</p>
+              </div>
+            )}
+            <div>
+              <span className="text-gray-400">Selected Styles:</span>
+              <p className="text-white font-medium">{selectedStyles.join(', ')}</p>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* License Generation Section */}
-      <div className="bg-gray-800 bg-opacity-50 rounded-lg border border-gray-700 p-6">
-        <h4 className="text-lg font-semibold text-white mb-4 flex items-center">
-          <Icon name="Shield" size={20} className="mr-2 text-purple-400" />
-          License Key Generation
-        </h4>
+        {/* License Generation Section */}
+        <div className="bg-gray-800 bg-opacity-50 rounded-lg border border-gray-700 p-6">
+          <h4 className="text-lg font-semibold text-white mb-4 flex items-center">
+            License Key Generation
+          </h4>
 
-        {!licenseGenerated ? (
-          <div className="text-center py-8">
-            <Icon name="Key" size={48} className="mx-auto mb-4 text-purple-400" />
-            <p className="text-gray-400 mb-6">
-              Generate a secure JWT license key for your photobooth event. This key will contain all your event configuration and selected AI styles.
-            </p>
-            <Button
-              variant="primary"
-              onClick={generateJWTLicense}
-              loading={isGenerating}
-              iconName="Zap"
-            >
-              {isGenerating ? 'Generating License...' : 'Generate License Key'}
-            </Button>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-green-400 flex items-center">
-                <Icon name="CheckCircle" size={16} className="mr-2" />
-                License Generated Successfully
-              </span>
-            </div>
-            <div className="bg-gray-900 rounded-lg p-4 border border-gray-700">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-white">License Key:</span>
-                <Button variant="ghost" onClick={copyLicenseKey} iconName="Copy">
-                  Copy
-                </Button>
-              </div>
-              <div className="bg-black bg-opacity-50 rounded p-3 font-mono text-xs text-gray-400 break-all">
-                {licenseKey}
-              </div>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Button variant="primary" onClick={downloadLicense} iconName="Download" className="flex-1">
-                Download License File (.lic)
+          {!licenseGenerated ? (
+            <div className="text-center py-8">
+              <Button
+                variant="primary"
+                onClick={generateJWTLicense}
+                loading={isGenerating}
+              >
+                {isGenerating ? 'Generating License...' : 'Generate License Key'}
               </Button>
             </div>
-          </div>
-        )}
-      </div>
+          ) : (
+            <div className="space-y-4">
+              {/* Removed the CheckCircle icon and fixed text alignment */}
+              <div className="flex items-center justify-between">
+                <span className="text-green-400 font-semibold">
+                  License Generated Successfully
+                </span>
+              </div>
+              <div className="bg-gray-900 rounded-lg p-4 border border-gray-700">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2 gap-2">
+                  <span className="text-sm font-medium text-white">License Key:</span>
+                  <Button variant="ghost" onClick={copyLicenseKey} >
+                    Copy
+                  </Button>
+                </div>
+                <div className="bg-black bg-opacity-50 rounded p-3 font-mono text-xs text-gray-400 break-all">
+                  {licenseKey}
+                </div>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button
+                  variant="primary"
+                  onClick={downloadLicense}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg border-0 rounded-lg h-14 text-base"
+                >
+                  Download License File
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
 
-      {/* Action Buttons */}
-      <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-700">
-        <Button variant="primary" onClick={onNewEvent} iconName="Plus" className="flex-1">
-          Create Another Event
-        </Button>
-        <Button variant="ghost" onClick={onClose} iconName="ArrowLeft" className="flex-1">
-          Back to Dashboard
-        </Button>
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-700">
+          <Button variant="primary" onClick={onNewEvent}  className="flex-1">
+            Create Another Event
+          </Button>
+          <Button variant="ghost" onClick={onClose}  className="flex-1">
+            Back to Dashboard
+          </Button>
+        </div>
       </div>
     </div>
   );

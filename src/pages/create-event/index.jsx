@@ -15,6 +15,8 @@ const CreateEvent = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [eventCreated, setEventCreated] = useState(false);
+  const [newEventData, setNewEventData] = useState(null);
+  const [duration, setDuration] = useState(0);
 
   // Mock user subscription data
   const [userSubscription] = useState({
@@ -164,6 +166,15 @@ const CreateEvent = () => {
     setIsSubmitting(true);
     
     try {
+      // Calculate duration
+      if (formData.startDate && formData.endDate && formData.startTime && formData.endTime) {
+        const start = new Date(`${formData.startDate}T${formData.startTime}`);
+        const end = new Date(`${formData.endDate}T${formData.endTime}`);
+        const diffInMs = end - start;
+        const diffInDays = Math.ceil(diffInMs / (1000 * 60 * 60 * 24));
+        setDuration(diffInDays);
+      }
+
       // Prepare event data
       const eventData = {
         ...formData,
@@ -173,15 +184,17 @@ const CreateEvent = () => {
         status: 'active'
       };
 
-      // Save to Supabase
+      // Save to Supabase and get the created record back
       const { data, error } = await supabase
         .from('eventDetails')
-        .insert([eventData]);
+        .insert([eventData])
+        .select();
 
       if (error) {
         throw error;
       }
 
+      setNewEventData(data[0]);
       setEventCreated(true);
       setCurrentStep(4);
     } catch (error) {
@@ -208,10 +221,15 @@ const CreateEvent = () => {
     setErrors({});
     setCurrentStep(1);
     setEventCreated(false);
+    setNewEventData(null);
   };
 
   const handleClose = () => {
-    navigate('/dashboard');
+    if (eventCreated && newEventData) {
+      navigate('/dashboard', { state: { newEvent: newEventData } });
+    } else {
+      navigate('/dashboard');
+    }
   };
 
   const renderStepContent = () => {
@@ -250,6 +268,7 @@ const CreateEvent = () => {
           <LicenseDownload
             eventData={formData}
             selectedStyles={selectedStyles}
+            duration={duration}
             onClose={handleClose}
             onNewEvent={handleNewEvent}
           />
