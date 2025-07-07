@@ -34,10 +34,8 @@ const Login = () => {
     const result = await signInWithGoogle();
     
     if (result?.success) {
-      // With the database trigger, user profile and trial records are created automatically
-      // for new users signing in with Google for the first time.
-      // Note: Google OAuth will redirect automatically
-      // The redirect URL is handled in the auth service
+      // OAuth will handle the redirect automatically
+      // No need to navigate manually
     }
     
     setIsLoading(false);
