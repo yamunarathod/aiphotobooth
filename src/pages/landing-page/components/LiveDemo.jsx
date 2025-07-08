@@ -278,7 +278,11 @@ const LiveDemo = () => {
     try {
       // Load workflow JSON
       const workflowResponse = await fetch(`/wfonline/${selectedStyle}online.json`);
-      let workflow = await workflowResponse.json();
+      if (!workflowResponse.ok) {
+        throw new Error(`Workflow JSON not found: ${workflowResponse.statusText}`);
+      }
+      const workflow = await workflowResponse.json();
+      
 
       // Update node 283 with UUID
       workflow['283'].inputs.unique_id = uuid;
