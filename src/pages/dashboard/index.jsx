@@ -13,7 +13,6 @@ import LicenseDownload from '../create-event/components/LicenseDownload';
 const Dashboard = () => {
   const { user, userProfile, signOut } = useAuth();
 
-
   // View and download states
   const [viewingEvent, setViewingEvent] = useState(null);
   const [downloadingEvent, setDownloadingEvent] = useState(null);
@@ -57,26 +56,78 @@ const Dashboard = () => {
       return;
     }
 
-
-    // Updated fetchDashboardData function
+    // Updated fetchDashboardData function to handle multiple subscriptions
     const fetchDashboardData = async () => {
       setIsLoading(true);
       try {
-        // Fetch the most recent active subscription for the user
-        const { data: subData, error: subError } = await supabase
+        // Fetch ALL active subscriptions for the user (not just the most recent one)
+        const { data: subscriptions, error: subError } = await supabase
           .from('subscriptions')
           .select('*')
           .eq('userId', user.id)
           .eq('status', 'active')
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .single();
+          .order('created_at', { ascending: false });
 
         if (subError && subError.code !== 'PGRST116') {
           throw subError;
         }
 
-        setSubscription(subData || noSubscription);
+        // Process multiple subscriptions to calculate total credits
+        let processedSubscription = noSubscription;
+        
+        if (subscriptions && subscriptions.length > 0) {
+          // Group subscriptions by plan name to calculate totals
+          const planTotals = subscriptions.reduce((acc, sub) => {
+            const planName = sub.metadata?.planName || 'Unknown';
+            
+            if (!acc[planName]) {
+              acc[planName] = {
+                transformsIncluded: 0,
+                transformsUsed: 0,
+                count: 0,
+                latestSubscription: sub
+              };
+            }
+            
+            acc[planName].transformsIncluded += sub.metadata?.transformsIncluded || 0;
+            acc[planName].transformsUsed += sub.metadata?.transformsUsed || 0;
+            acc[planName].count += 1;
+            
+            // Keep track of the most recent subscription for each plan
+            if (new Date(sub.created_at) > new Date(acc[planName].latestSubscription.created_at)) {
+              acc[planName].latestSubscription = sub;
+            }
+            
+            return acc;
+          }, {});
+
+          // For now, we'll use the plan with the most recent subscription
+          // You might want to modify this logic based on your business requirements
+          const mostRecentPlan = Object.values(planTotals).reduce((latest, current) => {
+            return new Date(current.latestSubscription.created_at) > new Date(latest.latestSubscription.created_at) 
+              ? current 
+              : latest;
+          });
+
+          processedSubscription = {
+            status: 'active',
+            id: mostRecentPlan.latestSubscription.id,
+            metadata: {
+              planName: mostRecentPlan.latestSubscription.metadata?.planName || 'Unknown',
+              transformsIncluded: mostRecentPlan.transformsIncluded,
+              transformsUsed: mostRecentPlan.transformsUsed,
+              subscriptionCount: mostRecentPlan.count
+            },
+            // Include all subscription details for reference
+            allSubscriptions: subscriptions,
+            planTotals: planTotals
+          };
+
+          console.log('Processed subscription data:', processedSubscription);
+          console.log('Plan totals:', planTotals);
+        }
+
+        setSubscription(processedSubscription);
 
         // Fetch user's events from database
         const eventsData = await fetchEventsFromDatabase();
@@ -93,13 +144,13 @@ const Dashboard = () => {
     fetchDashboardData();
   }, [user]);
 
-
   // Derived values from subscription state
   const hasActiveSubscription = subscription && subscription.status === 'active';
   const planName = subscription?.metadata?.planName || 'No Plan';
   const transformsUsed = subscription?.metadata?.transformsUsed ?? 0;
   const transformsIncluded = subscription?.metadata?.transformsIncluded ?? 0;
   const transformsRemaining = transformsIncluded - transformsUsed;
+  const subscriptionCount = subscription?.metadata?.subscriptionCount || 0;
 
   // Determine max styles based on plan name from metadata
   const getMaxStyles = () => {
@@ -163,74 +214,48 @@ const Dashboard = () => {
     setStep('license');
   };
 
-
-
-  // Updated handleLicenseDone function
-  const handleLicenseDone = async () => {
+  const saveFinalEventToDatabase = async (finalData) => {
     try {
-      // Save event to database
-      const savedEvent = await saveEventToDatabase(createdEvent);
+      const eventToSave = {
+        user_id: user.id,
+        event_name: finalData.eventName,
+        start_date: finalData.startDate,
+        start_time: finalData.startTime,
+        end_date: finalData.endDate,
+        end_time: finalData.endTime,
+        location: finalData.location || '',
+        description: finalData.description || '',
+        selected_styles: finalData.selectedStyles || [],
+        subscription_plan: finalData.subscriptionPlan || 'No Plan',
+        subscription_id: subscription?.id || null,
+        license_key: finalData.licenseKey,
+        license_generated_at: new Date().toISOString(),
+        status: 'active',
+        metadata: {
+          transformsUsedAtCreation: transformsUsed,
+          transformsIncludedAtCreation: transformsIncluded,
+          userEmail: user.email,
+          userName: userProfile?.username || userProfile?.full_name || 'Unknown'
+        }
+      };
 
-      // Log the event details to console
-      console.log('=== EVENT CREATED ===');
-      console.log('Event Details:', {
-        id: savedEvent.id,
-        eventName: savedEvent.event_name,
-        startDate: savedEvent.start_date,
-        startTime: savedEvent.start_time,
-        endDate: savedEvent.end_date,
-        endTime: savedEvent.end_time,
-        location: savedEvent.location,
-        description: savedEvent.description,
-        selectedStyles: savedEvent.selected_styles,
-        subscriptionPlan: savedEvent.subscription_plan,
-        createdAt: savedEvent.created_at,
-        userId: savedEvent.user_id,
-        metadata: savedEvent.metadata
-      });
+      const { data, error } = await supabase
+        .from('events')
+        .insert([eventToSave])
+        .select()
+        .single();
 
-      // Log selected styles details if any
-      if (savedEvent.selected_styles && savedEvent.selected_styles.length > 0) {
-        console.log('Selected AI Styles:', savedEvent.selected_styles);
-        console.log('Number of styles selected:', savedEvent.selected_styles.length);
-      }
+      if (error) throw error;
 
-      // Log subscription info
-      console.log('Subscription Info:', {
-        planName: savedEvent.subscription_plan,
-        subscriptionId: savedEvent.subscription_id,
-        transformsUsed: transformsUsed,
-        transformsIncluded: transformsIncluded,
-        transformsRemaining: transformsRemaining
-      });
+      setEvents(prev => [data, ...prev]);
 
-      console.log('=== END EVENT LOG ===');
-
-      // Add to local events array (this will be replaced by fresh data from database)
-      setEvents(prevEvents => [savedEvent, ...prevEvents]);
-
-      // Reset form state
-      setFormData({
-        eventName: '',
-        startDate: '',
-        startTime: '',
-        endDate: '',
-        endTime: '',
-        location: '',
-        description: ''
-      });
-      setSelectedStyles([]);
-      setCreatedEvent(null);
-      setStep(null);
-      setErrors({});
-
-    } catch (error) {
-      console.error('Error creating event:', error);
-      alert('Failed to create event. Please try again.');
+    } catch (err) {
+      console.error('❌ Error saving final event:', err);
+      alert('Something went wrong while saving the event. Please try again.');
     }
+
+    // await saveSubscriptionManagementData(data.id, user.id, finalData.eventName);
   };
-
-
 
   const handleBackToEdit = () => setStep('form');
   const handleBackToStyles = () => setStep('styles');
@@ -241,11 +266,60 @@ const Dashboard = () => {
   };
 
 
+  // ... inside your saveFinalEventToDatabase or a new function
+const saveSubscriptionManagementData = async (eventId, userId, eventName) => {
+  try {
+      // Fetch existing subscription management record for the user
+      const { data: existingEntry, error: fetchError } = await supabase
+          .from('subscriptionmanagement')
+          .select('*')
+          .eq('userId', userId)
+          .single();
+
+      let updatedListOfEvents = [];
+      if (existingEntry) {
+          updatedListOfEvents = existingEntry.list_of_events || [];
+          // Ensure event is not duplicated in the list
+          if (!updatedListOfEvents.some(event => event.id === eventId)) {
+              updatedListOfEvents.push({ id: eventId, name: eventName });
+          }
+      } else {
+          updatedListOfEvents.push({ id: eventId, name: eventName });
+      }
+
+      const { data, error } = await supabase
+          .from('subscriptionmanagement')
+          .upsert(
+              {
+                  userId: userId,
+                  eventId: eventId, // Link to the most recent event, or keep it null if 'list_of_events' is sufficient
+                  list_of_events: updatedListOfEvents,
+                  // Initialize credits_left for a new user if no entry exists, based on their subscription
+                  credits_left: existingEntry ? existingEntry.credits_left : transformsIncluded // Use 'transformsIncluded' from your subscription logic
+              },
+              {
+                  onConflict: 'userId', // Use userId as the unique key to upsert
+                  ignoreDuplicates: false
+              }
+          )
+          .select()
+          .single();
+
+      if (error) throw error;
+      console.log('Subscription management data saved/updated:', data);
+  } catch (err) {
+      console.error('Error saving subscription management data:', err);
+  }
+};
+
+// Call this function after successfully saving the event in saveFinalEventToDatabase
+// await saveSubscriptionManagementData(data.id, user.id, finalData.eventName);
+
   // Function to save event to database
   const saveEventToDatabase = async (eventData) => {
+    console.log('Saving event to databaseeeeeeeeeee:', eventData);
     try {
-      const licenseKey = generateLicenseKey({ id: Date.now().toString() });
-      
+      // First, save the event WITHOUT the license key
       const eventToSave = {
         user_id: user.id,
         event_name: eventData.eventName,
@@ -258,8 +332,6 @@ const Dashboard = () => {
         selected_styles: eventData.selectedStyles || [],
         subscription_plan: eventData.subscriptionPlan || 'No Plan',
         subscription_id: subscription?.id || null,
-        license_key: licenseKey,
-        license_generated_at: new Date().toISOString(),
         status: 'active',
         metadata: {
           transformsUsedAtCreation: transformsUsed,
@@ -269,8 +341,7 @@ const Dashboard = () => {
         }
       };
 
-      console.log('Saving event to database:', eventToSave);
-
+      // Insert the event and get the created record
       const { data, error } = await supabase
         .from('events')
         .insert([eventToSave])
@@ -282,46 +353,26 @@ const Dashboard = () => {
         throw error;
       }
 
-      console.log('Event saved successfully:', data);
-      return data;
-    } catch (error) {
-      console.error('Failed to save event to database:', error);
-      throw error;
-    }
-  };
-
-   const generateLicenseKey = (eventData) => {
-    const timestamp = new Date().getTime();
-    const eventId = eventData.id.slice(0, 8);
-    const userId = user.id.slice(0, 8);
-    const randomString = Math.random().toString(36).substring(2, 8).toUpperCase();
-    return `MPB-${eventId}-${userId}-${randomString}-${timestamp}`;
-  };
-
-  // Function to update license key for existing event
-  const updateLicenseKey = async (eventId) => {
-    try {
-      const newLicenseKey = generateLicenseKey({ id: eventId });
-      
-      const { data, error } = await supabase
+      // Update the event with the license key
+      const { data: updatedData, error: updateError } = await supabase
         .from('events')
         .update({
-          license_key: newLicenseKey,
+          license_key: licenseKey,
           license_generated_at: new Date().toISOString()
         })
-        .eq('id', eventId)
-        .eq('user_id', user.id)
+        .eq('id', data.id)
         .select()
         .single();
 
-      if (error) {
-        console.error('Error updating license key:', error);
-        throw error;
+      if (updateError) {
+        console.error('Error updating license key:', updateError);
+        throw updateError;
       }
 
-      return data;
+      console.log('Event saved successfully with license key:', updatedData);
+      return updatedData;
     } catch (error) {
-      console.error('Failed to update license key:', error);
+      console.error('Failed to save event to database:', error);
       throw error;
     }
   };
@@ -340,8 +391,7 @@ const Dashboard = () => {
     URL.revokeObjectURL(url);
   };
 
-
-    const fetchEventDetails = async (eventId) => {
+  const fetchEventDetails = async (eventId) => {
     try {
       const { data, error } = await supabase
         .from('events')
@@ -362,7 +412,6 @@ const Dashboard = () => {
     }
   };
 
-
   const handleViewEvent = async (eventId) => {
     try {
       const eventDetails = await fetchEventDetails(eventId);
@@ -374,33 +423,49 @@ const Dashboard = () => {
     }
   };
 
-
   // Handle download license
   const handleDownloadLicense = async (eventId) => {
     try {
       setIsDownloading(true);
       setDownloadingEvent(eventId);
-      
-      // Fetch current event details
-      const eventDetails = await fetchEventDetails(eventId);
-      
-      // Update license key (generate new one each time)
-      const updatedEvent = await updateLicenseKey(eventId);
-      
-      // Download the license
-      downloadLicense(updatedEvent);
-      
-      // Update local events array with new license info
-      setEvents(prevEvents => 
-        prevEvents.map(event => 
-          event.id === eventId 
-            ? { ...event, license_key: updatedEvent.license_key, license_generated_at: updatedEvent.license_generated_at }
-            : event
-        )
-      );
-      
-      console.log('License downloaded successfully:', updatedEvent.license_key);
-      
+
+      // Step 1: Fetch event with license key
+      const { data: eventDetails, error } = await supabase
+        .from('events')
+        .select('*')
+        .eq('id', eventId)
+        .eq('user_id', user.id)
+        .single();
+
+      if (error) throw error;
+
+      if (!eventDetails.license_key) {
+        alert("This event doesn't have a license key yet.");
+        return;
+      }
+
+      // Step 2: Construct license file content
+      const content = `
+
+  ${eventDetails.license_key}
+  
+  `.trim();
+
+      // Step 3: Trigger download
+      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+      const filename = `License_${eventDetails.event_name.replace(/[^a-zA-Z0-9]/g, '_')}_${eventDetails.start_date}.txt`;
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      console.log('License downloaded successfully');
+
     } catch (error) {
       console.error('Error downloading license:', error);
       alert('Failed to download license. Please try again.');
@@ -409,7 +474,6 @@ const Dashboard = () => {
       setDownloadingEvent(null);
     }
   };
-
 
   // Add this new function to fetch events from database
   const fetchEventsFromDatabase = async () => {
@@ -432,7 +496,6 @@ const Dashboard = () => {
       return [];
     }
   };
-
 
   if (isLoading) {
     return (
@@ -502,6 +565,11 @@ const Dashboard = () => {
               <span className="text-slate-400 text-sm ml-2">/ {transformsIncluded}</span>
             </div>
             <p className="text-slate-400 text-sm">Transformations Used</p>
+            {subscriptionCount > 1 && (
+              <p className="text-xs text-violet-400 mt-1">
+                {subscriptionCount} active subscriptions
+              </p>
+            )}
           </div>
           <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50">
             <div className="flex items-center justify-between mb-4">
@@ -591,7 +659,7 @@ const Dashboard = () => {
                         >
                           View
                         </Button>
-                       <Button
+                        <Button
                           variant="outline"
                           size="sm"
                           className="border-violet-400 text-violet-400 disabled:opacity-50"
@@ -615,7 +683,14 @@ const Dashboard = () => {
               <h3 className="text-lg font-semibold text-white mb-4">Current Plan</h3>
               <div className="bg-violet-500/20 rounded-lg p-4 border border-violet-500/30 mb-4">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-violet-300 font-medium">{planName}</span>
+                  <span className="text-violet-300 font-medium">
+                    {planName}
+                    {subscriptionCount > 1 && (
+                      <span className="text-xs text-violet-400 ml-2">
+                        (×{subscriptionCount})
+                      </span>
+                    )}
+                  </span>
                   <Icon name="Crown" size={20} className="text-violet-400" />
                 </div>
                 <div className="text-2xl font-bold text-white mb-1">{transformsRemaining < 0 ? 0 : transformsRemaining}</div>
@@ -702,11 +777,62 @@ const Dashboard = () => {
         {step === 'license' && createdEvent && (
           <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
             <div className="bg-slate-900 rounded-xl p-8 w-full max-w-lg relative">
-              <button className="absolute top-4 right-4 text-white" onClick={handleLicenseDone}><Icon name="X" size={20} /></button>
-              <LicenseDownload eventData={createdEvent} selectedStyles={createdEvent.selectedStyles} onClose={handleLicenseDone} onNewEvent={() => { handleLicenseDone(); handleCreateEventClick(); }} />
+              <button className="absolute top-4 right-4 text-white" onClick={() => setStep(null)}>
+                <Icon name="X" size={20} />
+              </button>
+              <LicenseDownload
+                eventData={createdEvent}
+                selectedStyles={createdEvent.selectedStyles}
+                onClose={() => setStep(null)}
+                onNewEvent={() => {
+                  setFormData({
+                    eventName: '',
+                    startDate: '',
+                    startTime: '',
+                    endDate: '',
+                    endTime: '',
+                    location: '',
+                    description: ''
+                  });
+                  setSelectedStyles([]);
+                  setCreatedEvent(null);
+                  setErrors({});
+                  setStep('form');
+                }}
+                onSave={async (finalData) => {
+                  await saveFinalEventToDatabase(finalData);
+
+
+                }}
+              />
+
             </div>
           </div>
         )}
+        {viewingEvent && (
+          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+            <div className="bg-slate-900 rounded-xl p-8 w-full max-w-lg relative">
+              <button className="absolute top-4 right-4 text-white" onClick={() => setViewingEvent(null)}>
+                <Icon name="X" size={20} />
+              </button>
+
+              <h2 className="text-xl font-semibold text-white mb-4">Event Details</h2>
+              <div className="space-y-2 text-sm text-white">
+                <p><strong>Event Name:</strong> {viewingEvent.event_name}</p>
+                <p><strong>Start:</strong> {viewingEvent.start_date} at {viewingEvent.start_time}</p>
+                <p><strong>End:</strong> {viewingEvent.end_date} at {viewingEvent.end_time}</p>
+                <p><strong>Location:</strong> {viewingEvent.location || 'N/A'}</p>
+                <p><strong>Description:</strong> {viewingEvent.description || 'N/A'}</p>
+                <p><strong>Styles:</strong> {(viewingEvent.selected_styles || []).join(', ')}</p>
+                <p><strong>Subscription Plan:</strong> {viewingEvent.subscription_plan}</p>
+                <p><strong>License Key:</strong> {viewingEvent.license_key ? 'Generated ✅' : 'Not generated ❌'}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+
+
       </main>
     </div>
   );

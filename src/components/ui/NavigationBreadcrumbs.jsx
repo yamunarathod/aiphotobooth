@@ -8,7 +8,6 @@ const NavigationBreadcrumbs = () => {
 
   const routeMap = {
     '/dashboard': { label: 'Dashboard', icon: 'LayoutDashboard' },
-    '/subscription-management': { label: 'Subscription Management', icon: 'CreditCard', parent: '/user-profile' },
     '/create-event': { label: 'Create Event', icon: 'Plus', parent: '/dashboard' },
     '/event-management': { label: 'Event Management', icon: 'Calendar' },
     '/user-profile': { label: 'User Profile', icon: 'User' }

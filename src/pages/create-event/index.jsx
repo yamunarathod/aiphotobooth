@@ -184,19 +184,12 @@ const CreateEvent = () => {
         status: 'active'
       };
 
-      // Save to Supabase and get the created record back
-      const { data, error } = await supabase
-        .from('eventDetails')
-        .insert([eventData])
-        .select();
+      cosnole.log('Event dataaaaaaaaaaaaaaaaaaaaaaaaaaa:', eventData);
 
-      if (error) {
-        throw error;
-      }
+  
 
-      setNewEventData(data[0]);
-      setEventCreated(true);
-      setCurrentStep(4);
+
+      
     } catch (error) {
       console.error('Error creating event:', error);
       setErrors({ submit: 'Failed to create event. Please try again.' });

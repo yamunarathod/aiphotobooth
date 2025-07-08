@@ -33,9 +33,7 @@ const SubscriptionTab = ({ user }) => {
     return (user.subscription.transformationsUsed / maxTransformations) * 100;
   };
 
-  const handleManageSubscription = () => {
-    navigate('/subscription-management');
-  };
+ 
 
   return (
     <div className="space-y-6">

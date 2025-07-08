@@ -35,22 +35,12 @@ const HeaderNavigation = () => {
           label: 'Profile',
           path: '/user-profile',
           icon: 'User'
-        },
-        {
-          label: 'Subscription',
-          path: '/subscription-management',
-          icon: 'CreditCard'
         }
       ]
     }
   ];
 
-  const isActiveRoute = (path) => {
-    if (path === '/user-profile') {
-      return location.pathname === '/user-profile' || location.pathname === '/subscription-management';
-    }
-    return location.pathname === path;
-  };
+
 
   const handleNavigation = (path) => {
     navigate(path);

@@ -23,12 +23,6 @@ const UserProfileDropdown = ({ isMobile = false }) => {
       description: 'Manage your account settings'
     },
     {
-      label: 'Subscription',
-      icon: 'CreditCard',
-      action: () => navigate('/subscription-management'),
-      description: 'Manage billing and plans'
-    },
-    {
       label: 'Settings',
       icon: 'Settings',
       action: () => console.log('Settings clicked'),

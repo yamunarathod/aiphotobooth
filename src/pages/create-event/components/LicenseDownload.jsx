@@ -83,7 +83,7 @@ const createJWT = (payload, secret) => {
 };
 
 
-const LicenseDownload = ({ eventData, selectedStyles, onClose, onNewEvent }) => {
+const LicenseDownload = ({ eventData, selectedStyles, onClose, onNewEvent, onSave }) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [licenseGenerated, setLicenseGenerated] = useState(false);
   const [licenseKey, setLicenseKey] = useState('');
@@ -91,48 +91,49 @@ const LicenseDownload = ({ eventData, selectedStyles, onClose, onNewEvent }) => 
   /**
    * Generates the license key using the corrected JWT creation logic.
    */
-  const generateJWTLicense = async () => {
-    setIsGenerating(true);
+// If eventData.startDate is a Date object, clone and set time manually
+const combineDateAndTime = (dateObj, timeStr) => {
+  if (!(dateObj instanceof Date) || isNaN(dateObj)) return null;
+  const [hours, minutes] = timeStr.split(':');
+  const combined = new Date(dateObj);
+  combined.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
+  return combined;
+};
 
-    try {
-      // Simulate license generation delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
+const generateJWTLicense = async () => {
+  setIsGenerating(true);
+  try {
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    const startDateTime = combineDateAndTime(eventData.startDate, eventData.startTime);
+    const endDateTime = combineDateAndTime(eventData.endDate, eventData.endTime);
+    if (!startDateTime || !endDateTime) throw new Error('Invalid date/time');
 
-      // 1. Create the license payload with the user-specified structure.
-      const startDateTime = new Date(`${eventData.startDate}T${eventData.startTime}`);
-      const endDateTime = new Date(`${eventData.endDate}T${eventData.endTime}`);
+    const licensePayload = {
+      start_date_time: startDateTime.toISOString(),
+      end_date_time: endDateTime.toISOString(),
+      themes_selected: selectedStyles.join(', '),
+      selected_builds: 'default_build, premium_features',
+      photobooth_mode: 'standard',
+      issuedAt: new Date().toISOString(),
+    };
 
-      // NOTE: 'builds' and 'mode' are not available in the component's current props.
-      // Using placeholder values as per the required payload structure.
-      // You might need to pass these down as props if they are dynamic.
-      const builds = ['default_build', 'premium_features'];
-      const mode = 'standard';
+    const secretKey = 'MAGIC_PHOTOBOOTH_SECRET_2024';
+    const jwtToken = createJWT(licensePayload, secretKey);
 
-      const licensePayload = {
-        start_date_time: !isNaN(startDateTime) ? startDateTime.toISOString() : 'Invalid Start Date',
-        end_date_time: !isNaN(endDateTime) ? endDateTime.toISOString() : 'Invalid End Date',
-        themes_selected: selectedStyles.join(", "),
-        selected_builds: builds.join(", "),
-        photobooth_mode: mode,
-        issuedAt: new Date().toISOString(),
-      };
+    setLicenseKey(jwtToken);
+    setLicenseGenerated(true);
 
-      // 2. Define the secret key.
-      const secretKey = 'MAGIC_PHOTOBOOTH_SECRET_2024';
+    const finalData = { ...eventData, licenseKey: jwtToken };
+    await onSave(finalData); // save but DO NOT close
 
-      // 3. Create the JWT using the corrected, URL-safe function.
-      const jwtToken = createJWT(licensePayload, secretKey);
+  } catch (error) {
+    console.error('License generation failed:', error);
+    alert('Failed to generate license.');
+  } finally {
+    setIsGenerating(false);
+  }
+};
 
-      setLicenseKey(jwtToken);
-      setLicenseGenerated(true);
-
-    } catch (error) {
-      console.error('Error generating license:', error);
-      // Optionally, set an error state here to show in the UI
-    } finally {
-      setIsGenerating(false);
-    }
-  };
 
   const downloadLicense = () => {
     if (!licenseKey) return;
