@@ -15,6 +15,7 @@ import { useAuth } from "contexts/AuthContext";
 import EventManagement from "pages/event-management";
 import CreateEvent from "pages/create-event";
 import UserProfile from "pages/user-profile";
+import EventDetails from "pages/event-details";
 
 // Component to protect auth routes (login/signup) from logged-in users
 export const AuthRoute = ({ children }) => {
@@ -103,6 +104,7 @@ const Routes = () => {
                 </PrivateRoute>
               }
             />
+            <Route path="/event/:eventId" element={<EventDetails />} />
             <Route
               path="/subscription"
               element={

@@ -84,6 +84,7 @@ const createJWT = (payload, secret) => {
 
 
 const LicenseDownload = ({ eventData, selectedStyles, onClose, onNewEvent, onSave }) => {
+  console.log('LicenseDownload component rendered with props:', { eventData, selectedStyles });
   const [isGenerating, setIsGenerating] = useState(false);
   const [licenseGenerated, setLicenseGenerated] = useState(false);
   const [licenseKey, setLicenseKey] = useState('');
@@ -109,13 +110,17 @@ const generateJWTLicense = async () => {
     if (!startDateTime || !endDateTime) throw new Error('Invalid date/time');
 
     const licensePayload = {
+      eventId: eventData.eventId,
       start_date_time: startDateTime.toISOString(),
       end_date_time: endDateTime.toISOString(),
       themes_selected: selectedStyles.join(', '),
       selected_builds: 'default_build, premium_features',
       photobooth_mode: 'standard',
       issuedAt: new Date().toISOString(),
+      
     };
+    console.log('License Payload:', licensePayload);
+
 
     const secretKey = 'MAGIC_PHOTOBOOTH_SECRET_2024';
     const jwtToken = createJWT(licensePayload, secretKey);

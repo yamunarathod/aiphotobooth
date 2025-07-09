@@ -38,6 +38,7 @@ const Dashboard = () => {
   const [errors, setErrors] = useState({});
   const [selectedStyles, setSelectedStyles] = useState([]);
   const [createdEvent, setCreatedEvent] = useState(null);
+  const [savedEventId, setSavedEventId] = useState(null); // New state to store the saved event ID
 
   // Default object for users without a subscription
   const noSubscription = {
@@ -49,7 +50,6 @@ const Dashboard = () => {
     }
   };
 
-  // Fetch subscription and events data on component mount
   useEffect(() => {
     if (!user?.id) {
       setIsLoading(false);
@@ -210,116 +210,28 @@ const Dashboard = () => {
     setStep('summary');
   };
 
-  const handleNextFromSummary = () => {
-    setStep('license');
-  };
-
-  const saveFinalEventToDatabase = async (finalData) => {
+  // Modified to save event first, then proceed to license generation
+  const handleNextFromSummary = async () => {
     try {
-      const eventToSave = {
-        user_id: user.id,
-        event_name: finalData.eventName,
-        start_date: finalData.startDate,
-        start_time: finalData.startTime,
-        end_date: finalData.endDate,
-        end_time: finalData.endTime,
-        location: finalData.location || '',
-        description: finalData.description || '',
-        selected_styles: finalData.selectedStyles || [],
-        subscription_plan: finalData.subscriptionPlan || 'No Plan',
-        subscription_id: subscription?.id || null,
-        license_key: finalData.licenseKey,
-        license_generated_at: new Date().toISOString(),
-        status: 'active',
-        metadata: {
-          transformsUsedAtCreation: transformsUsed,
-          transformsIncludedAtCreation: transformsIncluded,
-          userEmail: user.email,
-          userName: userProfile?.username || userProfile?.full_name || 'Unknown'
-        }
-      };
-
-      const { data, error } = await supabase
-        .from('events')
-        .insert([eventToSave])
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      setEvents(prev => [data, ...prev]);
-
-    } catch (err) {
-      console.error('❌ Error saving final event:', err);
-      alert('Something went wrong while saving the event. Please try again.');
+      // Save the event to database first (without license key)
+      const savedEvent = await saveEventToDatabase(createdEvent);
+      setSavedEventId(savedEvent.id);
+      
+      // Update the created event with the saved event ID
+      setCreatedEvent(prev => ({ ...prev, eventId: savedEvent.id }));
+      
+      // Now proceed to license generation step
+      setStep('license');
+    } catch (error) {
+      console.error('Error saving event:', error);
+      alert('Failed to save event. Please try again.');
     }
-
-    // await saveSubscriptionManagementData(data.id, user.id, finalData.eventName);
   };
 
-  const handleBackToEdit = () => setStep('form');
-  const handleBackToStyles = () => setStep('styles');
-
-  const handleSignOut = async () => {
-    const result = await signOut();
-    if (result?.success) navigate('/');
-  };
-
-
-  // ... inside your saveFinalEventToDatabase or a new function
-const saveSubscriptionManagementData = async (eventId, userId, eventName) => {
-  try {
-      // Fetch existing subscription management record for the user
-      const { data: existingEntry, error: fetchError } = await supabase
-          .from('subscriptionmanagement')
-          .select('*')
-          .eq('userId', userId)
-          .single();
-
-      let updatedListOfEvents = [];
-      if (existingEntry) {
-          updatedListOfEvents = existingEntry.list_of_events || [];
-          // Ensure event is not duplicated in the list
-          if (!updatedListOfEvents.some(event => event.id === eventId)) {
-              updatedListOfEvents.push({ id: eventId, name: eventName });
-          }
-      } else {
-          updatedListOfEvents.push({ id: eventId, name: eventName });
-      }
-
-      const { data, error } = await supabase
-          .from('subscriptionmanagement')
-          .upsert(
-              {
-                  userId: userId,
-                  eventId: eventId, // Link to the most recent event, or keep it null if 'list_of_events' is sufficient
-                  list_of_events: updatedListOfEvents,
-                  // Initialize credits_left for a new user if no entry exists, based on their subscription
-                  credits_left: existingEntry ? existingEntry.credits_left : transformsIncluded // Use 'transformsIncluded' from your subscription logic
-              },
-              {
-                  onConflict: 'userId', // Use userId as the unique key to upsert
-                  ignoreDuplicates: false
-              }
-          )
-          .select()
-          .single();
-
-      if (error) throw error;
-      console.log('Subscription management data saved/updated:', data);
-  } catch (err) {
-      console.error('Error saving subscription management data:', err);
-  }
-};
-
-// Call this function after successfully saving the event in saveFinalEventToDatabase
-// await saveSubscriptionManagementData(data.id, user.id, finalData.eventName);
-
-  // Function to save event to database
+  // New function to save event without license key first
   const saveEventToDatabase = async (eventData) => {
-    console.log('Saving event to databaseeeeeeeeeee:', eventData);
+    console.log('Saving event to database:', eventData);
     try {
-      // First, save the event WITHOUT the license key
       const eventToSave = {
         user_id: user.id,
         event_name: eventData.eventName,
@@ -341,7 +253,6 @@ const saveSubscriptionManagementData = async (eventId, userId, eventName) => {
         }
       };
 
-      // Insert the event and get the created record
       const { data, error } = await supabase
         .from('events')
         .insert([eventToSave])
@@ -353,27 +264,101 @@ const saveSubscriptionManagementData = async (eventId, userId, eventName) => {
         throw error;
       }
 
-      // Update the event with the license key
-      const { data: updatedData, error: updateError } = await supabase
+      console.log('Event saved successfully:', data);
+      
+      // Update events list immediately
+      setEvents(prev => [data, ...prev]);
+      
+      return data;
+    } catch (error) {
+      console.error('Failed to save event to database:', error);
+      throw error;
+    }
+  };
+
+  // Modified function to update event with license key
+  const updateEventWithLicense = async (eventId, licenseKey) => {
+    try {
+      const { data, error } = await supabase
         .from('events')
         .update({
           license_key: licenseKey,
           license_generated_at: new Date().toISOString()
         })
-        .eq('id', data.id)
+        .eq('id', eventId)
         .select()
         .single();
 
-      if (updateError) {
-        console.error('Error updating license key:', updateError);
-        throw updateError;
+      if (error) {
+        console.error('Error updating license key:', error);
+        throw error;
       }
 
-      console.log('Event saved successfully with license key:', updatedData);
-      return updatedData;
+      console.log('Event updated with license key:', data);
+      
+      // Update events list
+      setEvents(prev => prev.map(event => 
+        event.id === eventId ? data : event
+      ));
+      
+      return data;
     } catch (error) {
-      console.error('Failed to save event to database:', error);
+      console.error('Failed to update event with license:', error);
       throw error;
+    }
+  };
+
+  const handleBackToEdit = () => setStep('form');
+  const handleBackToStyles = () => setStep('styles');
+
+  const handleSignOut = async () => {
+    const result = await signOut();
+    if (result?.success) navigate('/');
+  };
+
+  // ... inside your saveFinalEventToDatabase or a new function
+  const saveSubscriptionManagementData = async (eventId, userId, eventName) => {
+    try {
+        // Fetch existing subscription management record for the user
+        const { data: existingEntry, error: fetchError } = await supabase
+            .from('subscriptionmanagement')
+            .select('*')
+            .eq('userId', userId)
+            .single();
+
+        let updatedListOfEvents = [];
+        if (existingEntry) {
+            updatedListOfEvents = existingEntry.list_of_events || [];
+            // Ensure event is not duplicated in the list
+            if (!updatedListOfEvents.some(event => event.id === eventId)) {
+                updatedListOfEvents.push({ id: eventId, name: eventName });
+            }
+        } else {
+            updatedListOfEvents.push({ id: eventId, name: eventName });
+        }
+
+        const { data, error } = await supabase
+            .from('subscriptionmanagement')
+            .upsert(
+                {
+                    userId: userId,
+                    eventId: eventId, // Link to the most recent event, or keep it null if 'list_of_events' is sufficient
+                    list_of_events: updatedListOfEvents,
+                    // Initialize credits_left for a new user if no entry exists, based on their subscription
+                    credits_left: existingEntry ? existingEntry.credits_left : transformsIncluded // Use 'transformsIncluded' from your subscription logic
+                },
+                {
+                    onConflict: 'userId', // Use userId as the unique key to upsert
+                    ignoreDuplicates: false
+                }
+            )
+            .select()
+            .single();
+
+        if (error) throw error;
+        console.log('Subscription management data saved/updated:', data);
+    } catch (err) {
+        console.error('Error saving subscription management data:', err);
     }
   };
 
@@ -412,15 +397,8 @@ const saveSubscriptionManagementData = async (eventId, userId, eventName) => {
     }
   };
 
-  const handleViewEvent = async (eventId) => {
-    try {
-      const eventDetails = await fetchEventDetails(eventId);
-      setViewingEvent(eventDetails);
-      console.log('Viewing event details:', eventDetails);
-    } catch (error) {
-      console.error('Error viewing event:', error);
-      alert('Failed to load event details. Please try again.');
-    }
+  const handleViewEvent = (eventId) => {
+    navigate(`/event/${eventId}`);
   };
 
   // Handle download license
@@ -774,7 +752,7 @@ const saveSubscriptionManagementData = async (eventId, userId, eventName) => {
             </div>
           </div>
         )}
-        {step === 'license' && createdEvent && (
+        {step === 'license' && createdEvent && savedEventId && (
           <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
             <div className="bg-slate-900 rounded-xl p-8 w-full max-w-lg relative">
               <button className="absolute top-4 right-4 text-white" onClick={() => setStep(null)}>
@@ -782,6 +760,7 @@ const saveSubscriptionManagementData = async (eventId, userId, eventName) => {
               </button>
               <LicenseDownload
                 eventData={createdEvent}
+                eventId={savedEventId}
                 selectedStyles={createdEvent.selectedStyles}
                 onClose={() => setStep(null)}
                 onNewEvent={() => {
@@ -796,43 +775,21 @@ const saveSubscriptionManagementData = async (eventId, userId, eventName) => {
                   });
                   setSelectedStyles([]);
                   setCreatedEvent(null);
+                  setSavedEventId(null);
                   setErrors({});
                   setStep('form');
                 }}
                 onSave={async (finalData) => {
-                  await saveFinalEventToDatabase(finalData);
-
-
+                  // Update the event with the license key
+                  await updateEventWithLicense(savedEventId, finalData.licenseKey);
+                  
+                  // Save subscription management data
+                  await saveSubscriptionManagementData(savedEventId, user.id, finalData.eventName);
                 }}
               />
-
             </div>
           </div>
         )}
-        {viewingEvent && (
-          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-            <div className="bg-slate-900 rounded-xl p-8 w-full max-w-lg relative">
-              <button className="absolute top-4 right-4 text-white" onClick={() => setViewingEvent(null)}>
-                <Icon name="X" size={20} />
-              </button>
-
-              <h2 className="text-xl font-semibold text-white mb-4">Event Details</h2>
-              <div className="space-y-2 text-sm text-white">
-                <p><strong>Event Name:</strong> {viewingEvent.event_name}</p>
-                <p><strong>Start:</strong> {viewingEvent.start_date} at {viewingEvent.start_time}</p>
-                <p><strong>End:</strong> {viewingEvent.end_date} at {viewingEvent.end_time}</p>
-                <p><strong>Location:</strong> {viewingEvent.location || 'N/A'}</p>
-                <p><strong>Description:</strong> {viewingEvent.description || 'N/A'}</p>
-                <p><strong>Styles:</strong> {(viewingEvent.selected_styles || []).join(', ')}</p>
-                <p><strong>Subscription Plan:</strong> {viewingEvent.subscription_plan}</p>
-                <p><strong>License Key:</strong> {viewingEvent.license_key ? 'Generated ✅' : 'Not generated ❌'}</p>
-              </div>
-            </div>
-          </div>
-        )}
-
-
-
       </main>
     </div>
   );
