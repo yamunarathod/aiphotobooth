@@ -93,7 +93,7 @@ const HeaderNavigation = () => {
                     <Icon name="Camera" size={20} color="white" />
                   </div>
                   <span className="text-xl font-semibold text-gradient">
-                    Magic Photobooth
+                    AI Photobooth
                   </span>
                 </div>
               </div>
@@ -190,7 +190,7 @@ const HeaderNavigation = () => {
                     <div className="w-6 h-6 rounded bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
                       <Icon name="Camera" size={16} color="white" />
                     </div>
-                    <span className="font-semibold text-gradient">Magic Photobooth</span>
+                    <span className="font-semibold text-gradient">AI Photobooth</span>
                   </div>
                   <button
                     onClick={toggleMobileMenu}

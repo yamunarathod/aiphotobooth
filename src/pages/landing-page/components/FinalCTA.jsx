@@ -146,7 +146,7 @@ const FinalCTA = () => {
           </h2>
           <p className="text-xl text-slate-300 max-w-3xl mx-auto mb-8">
             Join 10,000+ event professionals who've eliminated expensive photobooth rentals 
-            and created unforgettable experiences with AI Magic Photobooth.
+            and created unforgettable experiences with AI  Photobooth.
           </p>
 
           {/* Rotating Testimonials */}
@@ -241,7 +241,7 @@ const FinalCTA = () => {
             100% Risk-Free Guarantee
           </h3>
           <p className="text-slate-300 mb-6">
-            Try AI Magic Photobooth for 30 days. If you're not completely satisfied with the results, 
+            Try AI Photobooth for 30 days. If you're not completely satisfied with the results, 
             we'll refund every penny. No questions asked.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -266,7 +266,7 @@ const FinalCTA = () => {
             Don't let another event drain your budget with expensive photobooths.
           </p>
           <p className="text-2xl font-bold text-white">
-            Start saving 80% today with AI Magic Photobooth.
+            Start saving 80% today with AI  Photobooth.
           </p>
         </div>
       </div>

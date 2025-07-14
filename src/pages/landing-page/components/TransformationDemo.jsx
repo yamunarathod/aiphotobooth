@@ -102,7 +102,7 @@ const TransformationDemo = () => {
       <div className="container mx-auto px-6">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-            See the Magic in Action
+            See the  in Action
           </h2>
           <p className="text-xl text-slate-300 max-w-3xl mx-auto">
             Interactive before/after slider showing real AI transformations. 

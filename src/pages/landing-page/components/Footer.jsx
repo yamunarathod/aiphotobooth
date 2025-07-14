@@ -4,10 +4,10 @@ const Footer = () => {
   const currentYear = new Date().getFullYear()
 
   const socialLinks = [
-    { name: "Twitter", href: "https://twitter.com/magicphotobooth" },
-    { name: "Facebook", href: "https://facebook.com/magicphotobooth" },
-    { name: "Instagram", href: "https://instagram.com/magicphotobooth" },
-    { name: "LinkedIn", href: "https://linkedin.com/company/magicphotobooth" },
+    { name: "Twitter", href: "https://twitter.com/photobooth" },
+    { name: "Facebook", href: "https://facebook.com/photobooth" },
+    { name: "Instagram", href: "https://instagram.com/photobooth" },
+    { name: "LinkedIn", href: "https://linkedin.com/company/photobooth" },
   ]
 
   const legalLinks = [
@@ -28,7 +28,7 @@ const Footer = () => {
                   <Sparkles size={24} color="white" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-white">Magic Photobooth AI</h3>
+                  <h3 className="text-xl font-bold text-white"> Photobooth AI</h3>
                   <p className="text-sm text-slate-400">AI-Powered Event Photography</p>
                 </div>
               </div>
@@ -85,7 +85,7 @@ const Footer = () => {
         <div className="py-6 border-t border-slate-800">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="text-slate-400 text-sm mb-4 md:mb-0">
-              © {currentYear} Magic Photobooth AI. All rights reserved.
+              © {currentYear}  Photobooth AI. All rights reserved.
             </div>
 
             <div className="flex gap-6">

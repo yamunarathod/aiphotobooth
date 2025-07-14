@@ -65,7 +65,7 @@ const EventShowcaseSection = () => {
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Real Events, Real Results</h2>
           <p className="text-xl text-slate-300 max-w-3xl mx-auto">
-            See how we've transformed events across industries with our AI-powered photo magic. From corporate summits
+            See how we've transformed events across industries with our AI-powered photo . From corporate summits
             to luxury weddings, we deliver unforgettable experiences.
           </p>
         </div>
@@ -123,7 +123,7 @@ const EventShowcaseSection = () => {
               <div className="absolute bottom-6 left-6 right-6">
                 <div className="bg-slate-900/80 backdrop-blur-sm rounded-lg p-4">
                   <h4 className="text-white font-semibold mb-2">{currentEventData.title}</h4>
-                  <p className="text-slate-300 text-sm">Powered by AI Magic Photobooth</p>
+                  <p className="text-slate-300 text-sm">Powered by AI  Photobooth</p>
                 </div>
               </div>
             </div>

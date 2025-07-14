@@ -179,8 +179,8 @@ const CreateEvent = () => {
       const eventData = {
         ...formData,
         selectedStyles,
+        userId: userId,
         createdAt: new Date().toISOString(),
-        userId: 'mock-user-id', // Replace with real user id if available
         status: 'active'
       };
 

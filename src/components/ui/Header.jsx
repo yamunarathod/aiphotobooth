@@ -32,7 +32,7 @@ const Header = () => {
               <Icon name="Sparkles" size={20} color="white" />
             </div>
             <div>
-              <span className="text-xl font-bold text-white">Magic Photobooth AI</span>
+              <span className="text-xl font-bold text-white">Photobooth AI</span>
             </div>
           </Link>
 

@@ -423,7 +423,7 @@
   },
   "270": {
     "inputs": {
-      "text": "GHIBLI, Recreate the exact scene and composition from the input image in the whimsical, hand-drawn style of Studio Ghibli. Retain all characters, clothing, background elements, and lighting, but translate them into soft watercolor textures, delicate linework, and vibrant yet natural colors typical of Ghibli films. Infuse the image with a warm, storybook-like atmosphere, adding subtle magical or fantastical touches while preserving the original mood and setting. [caption]",
+      "text": "GHIBLI, Recreate the exact scene and composition from the input image in the whimsical, hand-drawn style of Studio Ghibli. Retain all characters, clothing, background elements, and lighting, but translate them into soft watercolor textures, delicate linework, and vibrant yet natural colors typical of Ghibli films. Infuse the image with a warm, storybook-like atmosphere, adding subtle al or fantastical touches while preserving the original mood and setting. [caption]",
       "old": "[caption]",
       "new": [
         "268",

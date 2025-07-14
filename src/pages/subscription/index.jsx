@@ -176,7 +176,7 @@ const SubscriptionPage = () => {
         console.error('Error logging enterprise inquiry:', error)
       }
 
-      alert("We'll contact you soon. Or reach out to sales@magicai.com.")
+      alert("We'll contact you soon. Or reach out to sales@ai.com.")
       return
     }
 
@@ -255,7 +255,7 @@ Your subscription is now active!`)
                 <Icon name="Sparkles" size={24} color="white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-white">Magic Photobooth AI</h1>
+                <h1 className="text-xl font-bold text-white"> Photobooth AI</h1>
                 <p className="text-sm text-slate-400">AI-Powered Event Photography</p>
               </div>
             </Link>
@@ -300,7 +300,7 @@ Your subscription is now active!`)
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Choose Your Perfect Plan</h2>
             <p className="text-xl text-slate-300 max-w-3xl mx-auto">
-              Transform your events with AI-powered photo magic. All plans include unlimited support, regular updates,
+              Transform your events with AI-powered photo . All plans include unlimited support, regular updates,
               and a 30-day money-back guarantee.
             </p>
           </div>

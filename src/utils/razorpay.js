@@ -83,7 +83,7 @@ export const makeRazorpayPayment = async ({
       key: "rzp_test_WT0igFhb5cfHNE",
       amount: amountInRupees * 100,
       currency: "INR",
-      name: "Magic Photobooth AI",
+      name: " Photobooth AI",
       description: `${planDetails.name} Plan - ${billingCycle}`,
       image: "/logo.png",
       handler: async function (response) {

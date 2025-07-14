@@ -86,7 +86,7 @@ const HeroSection = () => {
           <div className="relative">
             <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50">
               <div className="text-center mb-6">
-                <h3 className="text-xl font-semibold text-white mb-2 leading-tight">See the Magic in Action</h3>
+                <h3 className="text-xl font-semibold text-white mb-2 leading-tight">See the  in Action</h3>
                 <p className="text-slate-400 leading-tight">Real transformations in seconds</p>
               </div>
 

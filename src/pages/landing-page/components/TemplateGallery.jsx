@@ -18,7 +18,7 @@ const TemplateGallery = () => {
   const templates = [
     {
       id: 1,
-      name: "Ghibli Magic",
+      name: "Ghibli ",
       category: "ghibli",
       images: [
         "https://res.cloudinary.com/dk1xqwr3g/image/upload/v1751371140/image_20250627_121040_f4crjc.png",
@@ -109,7 +109,7 @@ const TemplateGallery = () => {
             transition={{ delay: 0.1 }}
             className="text-xl text-slate-300 max-w-3xl mx-auto"
           >
-            From Ghibli magic to Pixar charm, discover the perfect style for every event. Each template is fully
+            From Ghibli  to Pixar charm, discover the perfect style for every event. Each template is fully
             customizable with your brand colors and themes.
           </motion.p>
         </div>
@@ -195,7 +195,7 @@ const TemplateGallery = () => {
           <h3 className="text-2xl font-bold text-white mb-4">Need a Custom Style?</h3>
           <p className="text-slate-300 mb-6 max-w-2xl mx-auto">
             Our AI artists can create bespoke styles tailored to your brand, event theme, or creative vision. From
-            Ghibli magic to unique artistic concepts.
+            Ghibli  to unique artistic concepts.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <motion.button

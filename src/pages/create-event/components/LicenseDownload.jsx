@@ -15,22 +15,22 @@ const Icon = ({ name, size = 16, color = 'currentColor', className = '' }) => {
 
 // Mock Button component for demonstration purposes
 const Button = ({ children, onClick, loading, iconName, variant = 'primary', ...props }) => {
-    const baseClasses = "px-4 py-2 rounded-md font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2";
-    const variantClasses = {
-        primary: "bg-blue-600 text-white hover:bg-blue-700",
-        ghost: "bg-transparent text-gray-300 hover:bg-gray-700",
-    };
+  const baseClasses = "px-4 py-2 rounded-md font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2";
+  const variantClasses = {
+    primary: "bg-blue-600 text-white hover:bg-blue-700",
+    ghost: "bg-transparent text-gray-300 hover:bg-gray-700",
+  };
 
-    return (
-        <button onClick={onClick} disabled={loading} className={`${baseClasses} ${variantClasses[variant]}`} {...props}>
-            {loading ? 'Loading...' : (
-                <div className="flex items-center justify-center">
-                    {iconName && <Icon name={iconName} className="mr-2" />}
-                    {children}
-                </div>
-            )}
-        </button>
-    );
+  return (
+    <button onClick={onClick} disabled={loading} className={`${baseClasses} ${variantClasses[variant]}`} {...props}>
+      {loading ? 'Loading...' : (
+        <div className="flex items-center justify-center">
+          {iconName && <Icon name={iconName} className="mr-2" />}
+          {children}
+        </div>
+      )}
+    </button>
+  );
 };
 
 
@@ -92,52 +92,54 @@ const LicenseDownload = ({ eventData, selectedStyles, onClose, onNewEvent, onSav
   /**
    * Generates the license key using the corrected JWT creation logic.
    */
-// If eventData.startDate is a Date object, clone and set time manually
-const combineDateAndTime = (dateObj, timeStr) => {
-  if (!(dateObj instanceof Date) || isNaN(dateObj)) return null;
-  const [hours, minutes] = timeStr.split(':');
-  const combined = new Date(dateObj);
-  combined.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
-  return combined;
-};
+  // If eventData.startDate is a Date object, clone and set time manually
+  const combineDateAndTime = (dateObj, timeStr) => {
+    if (!(dateObj instanceof Date) || isNaN(dateObj)) return null;
+    const [hours, minutes] = timeStr.split(':');
+    const combined = new Date(dateObj);
+    combined.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
+    return combined;
+  };
 
-const generateJWTLicense = async () => {
-  setIsGenerating(true);
-  try {
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    const startDateTime = combineDateAndTime(eventData.startDate, eventData.startTime);
-    const endDateTime = combineDateAndTime(eventData.endDate, eventData.endTime);
-    if (!startDateTime || !endDateTime) throw new Error('Invalid date/time');
+  const generateJWTLicense = async () => {
+    setIsGenerating(true);
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      const startDateTime = combineDateAndTime(eventData.startDate, eventData.startTime);
+      const endDateTime = combineDateAndTime(eventData.endDate, eventData.endTime);
+      if (!startDateTime || !endDateTime) throw new Error('Invalid date/time');
 
-    const licensePayload = {
-      eventId: eventData.eventId,
-      start_date_time: startDateTime.toISOString(),
-      end_date_time: endDateTime.toISOString(),
-      themes_selected: selectedStyles.join(', '),
-      selected_builds: 'default_build, premium_features',
-      photobooth_mode: 'standard',
-      issuedAt: new Date().toISOString(),
-      
-    };
-    console.log('License Payload:', licensePayload);
+      const licensePayload = {
+        eventId: eventData.eventId,
+        userId: eventData.userId,
+        start_date_time: startDateTime.toISOString(),
+        end_date_time: endDateTime.toISOString(),
+        themes_selected: selectedStyles.join(', '),
+        selected_builds: 'default_build, premium_features',
+        photobooth_mode: 'standard',
+        issuedAt: new Date().toISOString(),
+
+      };
+      console.log('License Payload:', licensePayload);
 
 
-    const secretKey = 'MAGIC_PHOTOBOOTH_SECRET_2024';
-    const jwtToken = createJWT(licensePayload, secretKey);
+      // New corrected key, matching the Flutter app
+      const secretKey = 'b7f8e2d1c9a4f6e3b2d7c8a9e1f4b6d2c3a8e7f1b5d9c2a6f3e8b1d4c7a2f9e5';
+      const jwtToken = createJWT(licensePayload, secretKey);
 
-    setLicenseKey(jwtToken);
-    setLicenseGenerated(true);
+      setLicenseKey(jwtToken);
+      setLicenseGenerated(true);
 
-    const finalData = { ...eventData, licenseKey: jwtToken };
-    await onSave(finalData); // save but DO NOT close
+      const finalData = { ...eventData, licenseKey: jwtToken };
+      await onSave(finalData); // save but DO NOT close
 
-  } catch (error) {
-    console.error('License generation failed:', error);
-    alert('Failed to generate license.');
-  } finally {
-    setIsGenerating(false);
-  }
-};
+    } catch (error) {
+      console.error('License generation failed:', error);
+      alert('Failed to generate license.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
 
   const downloadLicense = () => {
@@ -151,7 +153,7 @@ const generateJWTLicense = async () => {
         endDateTime: `${eventData.endDate} ${eventData.endTime}`,
         selectedStyles: selectedStyles,
       },
-      instructions: `Magic Photobooth License File\n\nThis license file contains the JWT token required to activate your photobooth event.\n\nEvent: ${eventData.eventName}\nDate: ${eventData.startDate} to ${eventData.endDate}\nStyles: ${selectedStyles.join(', ')}\n\nTo use this license:\n1. Copy the license key from this file.\n2. Paste it into your photobooth application.\n3. The photobooth will automatically configure with your selected styles.\n\n--- LICENSE KEY BEGIN ---\n${licenseKey}\n--- LICENSE KEY END ---\n\nGenerated on: ${new Date().toLocaleString('en-IN')}\nValid until: ${new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toLocaleString('en-IN')}`
+      instructions: `${licenseKey}`
     };
 
     const blob = new Blob([licenseContent.instructions], { type: 'text/plain;charset=utf-8' });
@@ -195,21 +197,22 @@ const generateJWTLicense = async () => {
   // Dummy data for standalone rendering
   if (!eventData) {
     eventData = {
-        eventName: 'Test Gala 2024',
-        startDate: '2024-12-25',
-        startTime: '18:00',
-        endDate: '2024-12-25',
-        endTime: '23:00',
-        location: 'Grand Ballroom',
-        description: 'Annual company celebration.',
-        subscriptionPlan: 'Premium'
+      eventName: 'Test Gala 2024',
+      userId: 'user_demo',
+      startDate: '2024-12-25',
+      startTime: '18:00',
+      endDate: '2024-12-25',
+      endTime: '23:00',
+      location: 'Grand Ballroom',
+      description: 'Annual company celebration.',
+      subscriptionPlan: 'Premium'
     };
   }
-   if (!selectedStyles) {
-       selectedStyles = ['Vintage', 'Sci-Fi', 'Fantasy'];
-   }
-   if (!onClose) onClose = () => console.log('Close clicked');
-   if (!onNewEvent) onNewEvent = () => console.log('New Event clicked');
+  if (!selectedStyles) {
+    selectedStyles = ['Vintage', 'Sci-Fi', 'Fantasy'];
+  }
+  if (!onClose) onClose = () => console.log('Close clicked');
+  if (!onNewEvent) onNewEvent = () => console.log('New Event clicked');
 
 
   return (
@@ -315,10 +318,10 @@ const generateJWTLicense = async () => {
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-700">
-          <Button variant="primary" onClick={onNewEvent}  className="flex-1">
+          <Button variant="primary" onClick={onNewEvent} className="flex-1">
             Create Another Event
           </Button>
-          <Button variant="ghost" onClick={onClose}  className="flex-1">
+          <Button variant="ghost" onClick={onClose} className="flex-1">
             Back to Dashboard
           </Button>
         </div>

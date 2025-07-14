@@ -159,7 +159,7 @@ const BenefitsComparison = () => {
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
             Traditional Photobooths vs
             <span className="block bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">
-              AI Magic Photobooth
+              AI Photobooth
             </span>
           </h2>
           <p className="text-xl text-slate-300 max-w-3xl mx-auto">
@@ -177,7 +177,7 @@ const BenefitsComparison = () => {
               <h3 className="text-lg font-semibold text-red-400">Traditional Photobooth</h3>
             </div>
             <div className="p-6 text-center border-l border-slate-600">
-              <h3 className="text-lg font-semibold text-violet-400">AI Magic Photobooth</h3>
+              <h3 className="text-lg font-semibold text-violet-400">AI  Photobooth</h3>
             </div>
           </div>
 

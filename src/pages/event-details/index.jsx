@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { supabase } from '../../utils/supabase'; // Ensure supabase is imported
+import { supabase } from '../../utils/supabase';
+import { supabase2 } from '../../utils/supabase2'; // Import the secondary Supabase client
 import Button from '../../components/ui/Button';
 import { CalendarIcon, InfoIcon, PaletteIcon, KeyIcon, AlertCircleIcon, CheckCircleIcon, DownloadIcon, ArrowLeftIcon, BarChart3Icon, SettingsIcon, FileTextIcon } from 'lucide-react';
 
@@ -14,6 +15,11 @@ const EventDetails = () => {
   const [eventDetails, setEventDetails] = useState(null);
   const [subscriptionManagement, setSubscriptionManagement] = useState(null);
   const [error, setError] = useState(null);
+  
+  // NEW: State to hold statistics calculated from supabase2
+  const [eventStats, setEventStats] = useState({ photosGenerated: 0, creditsUsed: 0 });
+ const [overallCredits, setOverallCredits] = useState({ remaining: 0 });
+
 
   useEffect(() => {
     if (!user?.id || !eventId) {
@@ -29,7 +35,6 @@ const EventDetails = () => {
     try {
       setLoading(true);
       
-      // Fetch event details
       const { data: eventData, error: eventError } = await supabase
         .from('events')
         .select('*')
@@ -38,22 +43,37 @@ const EventDetails = () => {
         .single();
 
       if (eventError) throw eventError;
-
-      // Fetch subscription management details for this event
-      const { data: subManagementData, error: subError } = await supabase
-        .from('subscriptionmanagement')
-        .select('*')
-        .eq('eventId', eventId)
-        .eq('userId', user.id)
-        .single();
-
-      if (subError && subError.code !== 'PGRST116') {
-        console.warn('No subscription management data found for this event');
-      }
-
       setEventDetails(eventData);
-      setSubscriptionManagement(subManagementData);
-      console.log('Subscription management details fetched successfully:', subManagementData);
+
+      // --- Per-Event Stat Calculation ---
+      const { count: eventImageCount, error: eventCountError } = await supabase2
+        .from('inputimagetable')
+        .select('*', { count: 'exact', head: true })
+        .eq('eventId', eventId)
+        .eq('userId', user.id);
+      
+      if (eventCountError) throw eventCountError;
+
+      const photosGeneratedForEvent = eventImageCount || 0;
+      const creditsUsedForEvent = photosGeneratedForEvent * 20;
+      setEventStats({ photosGenerated: photosGeneratedForEvent, creditsUsed: creditsUsedForEvent });
+
+      // --- Overall Credits Remaining Calculation ---
+      // UPDATED: Get total credits directly from the event's saved metadata.
+      const totalCreditsInPlan = eventData?.metadata?.transformsIncludedAtCreation || 0;
+
+      // Fetch the user's total image generations across all events
+      const { count: totalUserImageCount, error: totalCountError } = await supabase2
+        .from('inputimagetable')
+        .select('*', { count: 'exact', head: true })
+        .eq('userId', user.id);
+
+      if (totalCountError) throw totalCountError;
+      
+      const totalCreditsUsedByUser = (totalUserImageCount || 0) * 20;
+      const creditsRemaining = totalCreditsInPlan - totalCreditsUsedByUser;
+      
+      setOverallCredits({ remaining: creditsRemaining < 0 ? 0 : creditsRemaining });
       
     } catch (err) {
       console.error('Error fetching event details:', err);
@@ -63,6 +83,7 @@ const EventDetails = () => {
     }
   };
 
+
   const handleDownloadLicense = async () => {
     if (!eventDetails?.license_key) {
       alert("This event doesn't have a license key yet.");
@@ -71,7 +92,7 @@ const EventDetails = () => {
 
     try {
       const content = `
-Magic Photobooth License File
+ Photobooth License File
 
 Event: ${eventDetails.event_name}
 Date: ${eventDetails.start_date} to ${eventDetails.end_date}
@@ -306,24 +327,27 @@ Generated on: ${new Date(eventDetails.license_generated_at).toLocaleString()}
               <div className="space-y-4">
                 <div>
                   <label className="text-sm text-slate-400">Images Generated</label>
+                  {/* UPDATED: Displaying photos generated from eventStats state */}
                   <p className="text-2xl font-bold text-white">
-                    {subscriptionManagement?.images_generated || 0}
+                    {eventStats.photosGenerated}
                   </p>
                 </div>
                 
                 <div>
                   <label className="text-sm text-slate-400">Credits Used</label>
+                  {/* UPDATED: Displaying credits used from eventStats state */}
                   <p className="text-2xl font-bold text-white">
-                    {subscriptionManagement?.credits_used || 0}
+                    {eventStats.creditsUsed}
                   </p>
                 </div>
                 
-                <div>
+                {/* <div>
                   <label className="text-sm text-slate-400">Credits Remaining</label>
+                
                   <p className="text-2xl font-bold text-white">
                     {subscriptionManagement?.credits_left || 0}
                   </p>
-                </div>
+                </div> */}
               </div>
             </div>
 

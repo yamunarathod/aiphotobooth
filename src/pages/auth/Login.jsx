@@ -51,7 +51,7 @@ const Login = () => {
               <Icon name="Sparkles" size={24} color="white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-white">Magic Photobooth AI</h1>
+              <h1 className="text-2xl font-bold text-white">AI Photobooth</h1>
               <p className="text-sm text-slate-400">AI-Powered Event Photography</p>
             </div>
           </Link>
