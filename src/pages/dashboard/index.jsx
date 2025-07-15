@@ -91,6 +91,7 @@ const Dashboard = () => {
         console.error('Error fetching credits from supabase2:', fetchError);
         return;
       }
+      console.log(`Fetched creditsUsed for event ${eventId} from supabase2:`, data);
 
       // Calculate the total credits used for this event from supabase2
       const totalCreditsUsedForEvent = data.reduce((sum, item) => sum + (item.creditsUsed || 0), 0);
@@ -317,57 +318,54 @@ const Dashboard = () => {
       alert('Failed to save event. Please try again.');
     }
   };
-
-  const saveEventToDatabase = async (eventData) => {
-    console.log('Saving event to database:', eventData);
-    try {
-      const eventToSave = {
-        user_id: user.id,
-        event_name: eventData.eventName,
-        start_date: eventData.startDate,
-        start_time: eventData.startTime,
-        end_date: eventData.endDate,
-        end_time: eventData.endTime,
-        location: eventData.location || '',
-        description: eventData.description || '',
-        selected_styles: eventData.selectedStyles || [],
-        subscription_plan: eventData.subscriptionPlan || 'No Plan',
-        subscription_id: subscription?.id || null,
-        status: 'active',
-        creditsUsed: 0, // Initialize creditsUsed to 0 when creating a new event
-        metadata: {
-          transformsUsedAtCreation: transformsUsedDisplay, // Use the display value
-          transformsIncludedAtCreation: transformsIncluded,
-          userEmail: user.email,
-          userName: userProfile?.username || userProfile?.full_name || 'Unknown'
-        }
-      };
-
-      const { data, error } = await supabase
-        .from('events')
-        .insert([eventToSave])
-        .select()
-        .single();
-
-      if (error) {
-        console.error('Error saving event:', error);
-        throw error;
+const saveEventToDatabase = async (eventData) => {
+  console.log('Saving event to database:', eventData);
+  try {
+    const eventToSave = {
+      user_id: user.id,
+      event_name: eventData.eventName,
+      start_date: eventData.startDate,
+      start_time: eventData.startTime,
+      end_date: eventData.endDate,
+      end_time: eventData.endTime,
+      location: eventData.location || '',
+      description: eventData.description || '',
+      selected_styles: eventData.selectedStyles || [],
+      subscription_plan: eventData.subscriptionPlan || 'No Plan',
+      subscription_id: subscription?.id || null,
+      status: 'active',
+      creditsUsed: 0, // Initialize creditsUsed to 0 when creating a new event
+      metadata: {
+        transformsUsedAtCreation: transformsUsedDisplay,
+        transformsIncludedAtCreation: transformsIncluded,
+        userEmail: user.email,
+        userName: userProfile?.username || userProfile?.full_name || 'Unknown'
       }
+    };
 
-      console.log('Event saved successfully:', data);
+    // Fix: Remove the columns parameter and use proper insert + select chain
+    const { data, error } = await supabase
+      .from('events')
+      .insert([eventToSave])
+      .select('*') // Use select('*') instead of just select()
+      .single();
 
-      // Update events list immediately with the new event
-      setEvents(prev => [data, ...prev]);
-
-      // No need to recalculate totalAggregatedCreditsUsed here as it's a new event with 0 creditsUsed
-      // and the real-time listener will handle updates from supabase2.
-
-      return data;
-    } catch (error) {
-      console.error('Failed to save event to database:', error);
+    if (error) {
+      console.error('Error saving event:', error);
       throw error;
     }
-  };
+
+    console.log('Event saved successfully:', data);
+
+    // Update events list immediately with the new event
+    setEvents(prev => [data, ...prev]);
+
+    return data;
+  } catch (error) {
+    console.error('Failed to save event to database:', error);
+    throw error;
+  }
+};
 
   const updateEventWithLicense = async (eventId, licenseKey) => {
     try {
