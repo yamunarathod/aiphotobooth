@@ -76,7 +76,7 @@ const EventDetails = () => {
       setOverallCredits({ remaining: creditsRemaining < 0 ? 0 : creditsRemaining });
       
     } catch (err) {
-      console.error('Error fetching event details:', err);
+      console.error('Err fetching event details:', err);
       setError('Failed to load event details');
     } finally {
       setLoading(false);
