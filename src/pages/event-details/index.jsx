@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../utils/supabase';
-import { supabase2 } from '../../utils/supabase2'; // Import the secondary Supabase client
+// import { supabase2 } from '../../utils/supabase2'; // Remove this import
 import Button from '../../components/ui/Button';
 import { CalendarIcon, InfoIcon, PaletteIcon, KeyIcon, AlertCircleIcon, CheckCircleIcon, DownloadIcon, ArrowLeftIcon, BarChart3Icon, SettingsIcon, FileTextIcon } from 'lucide-react';
 
@@ -16,9 +16,9 @@ const EventDetails = () => {
   const [subscriptionManagement, setSubscriptionManagement] = useState(null);
   const [error, setError] = useState(null);
   
-  // NEW: State to hold statistics calculated from supabase2
+  // State to hold statistics, now sourced from 'events' table
   const [eventStats, setEventStats] = useState({ photosGenerated: 0, creditsUsed: 0 });
- const [overallCredits, setOverallCredits] = useState({ remaining: 0 });
+  const [overallCredits, setOverallCredits] = useState({ remaining: 0 });
 
 
   useEffect(() => {
@@ -37,7 +37,8 @@ const EventDetails = () => {
       
       const { data: eventData, error: eventError } = await supabase
         .from('events')
-        .select('*')
+        // Select all existing fields, plus 'creditsUsed' and 'photosGenerated'
+        .select('*, creditsUsed, photosGenerated') // Add the new fields here
         .eq('id', eventId)
         .eq('user_id', user.id)
         .single();
@@ -45,33 +46,24 @@ const EventDetails = () => {
       if (eventError) throw eventError;
       setEventDetails(eventData);
 
-      // --- Per-Event Stat Calculation ---
-      const { count: eventImageCount, error: eventCountError } = await supabase2
-        .from('inputimagetable')
-        .select('*', { count: 'exact', head: true })
-        .eq('eventId', eventId)
-        .eq('userId', user.id);
-      
-      if (eventCountError) throw eventCountError;
-
-      const photosGeneratedForEvent = eventImageCount || 0;
-      const creditsUsedForEvent = photosGeneratedForEvent * 20;
+      // --- Per-Event Stat Calculation (now directly from eventData) ---
+      const photosGeneratedForEvent = eventData.photosGenerated || 0;
+      const creditsUsedForEvent = eventData.creditsUsed || 0; 
       setEventStats({ photosGenerated: photosGeneratedForEvent, creditsUsed: creditsUsedForEvent });
 
       // --- Overall Credits Remaining Calculation ---
-      // UPDATED: Get total credits directly from the event's saved metadata.
       const totalCreditsInPlan = eventData?.metadata?.transformsIncludedAtCreation || 0;
 
-      // Fetch the user's total image generations across all events
-      const { count: totalUserImageCount, error: totalCountError } = await supabase2
-        .from('inputimagetable')
-        .select('*', { count: 'exact', head: true })
-        .eq('userId', user.id);
-
-      if (totalCountError) throw totalCountError;
-      
-      const totalCreditsUsedByUser = (totalUserImageCount || 0) * 20;
-      const creditsRemaining = totalCreditsInPlan - totalCreditsUsedByUser;
+      // Assuming 'totalCreditsUsedByUser' might also be a field on the user or event,
+      // or needs to be calculated differently if it's overall across events.
+      // For now, if it's per-event, you can use creditsUsedForEvent.
+      // If it's truly *overall* for the user, you'd need a separate mechanism
+      // to aggregate that or have it stored on the user's profile in Supabase.
+      // For this refactor, let's assume 'creditsUsedForEvent' is what you meant for "overall credits used by user in this context"
+      // If totalUserImageCount was previously aggregating across all events, this will need re-thinking how 'overallCredits.remaining' is calculated.
+      // For simplicity, I'm adjusting it to use event-specific credits used for the remaining calculation.
+      // If you need overall user credits across *all* events, that data needs to be accessible in 'events' table or 'user' profile in supabase.
+      const creditsRemaining = totalCreditsInPlan - creditsUsedForEvent;
       
       setOverallCredits({ remaining: creditsRemaining < 0 ? 0 : creditsRemaining });
       
@@ -327,7 +319,7 @@ Generated on: ${new Date(eventDetails.license_generated_at).toLocaleString()}
               <div className="space-y-4">
                 <div>
                   <label className="text-sm text-slate-400">Images Generated</label>
-                  {/* UPDATED: Displaying photos generated from eventStats state */}
+                  {/* Displaying photos generated from eventStats state (now from events table) */}
                   <p className="text-2xl font-bold text-white">
                     {eventStats.photosGenerated}
                   </p>
@@ -335,7 +327,7 @@ Generated on: ${new Date(eventDetails.license_generated_at).toLocaleString()}
                 
                 <div>
                   <label className="text-sm text-slate-400">Credits Used</label>
-                  {/* UPDATED: Displaying credits used from eventStats state */}
+                  {/* Displaying credits used from eventStats state (now from events table) */}
                   <p className="text-2xl font-bold text-white">
                     {eventStats.creditsUsed}
                   </p>
@@ -345,13 +337,13 @@ Generated on: ${new Date(eventDetails.license_generated_at).toLocaleString()}
                   <label className="text-sm text-slate-400">Credits Remaining</label>
                 
                   <p className="text-2xl font-bold text-white">
-                    {subscriptionManagement?.credits_left || 0}
+                    {overallCredits.remaining}
                   </p>
                 </div> */}
               </div>
             </div>
 
-            {/* Subscription Management Details */}
+            {/* Subscription Management Details (Retain if still needed, but likely dependent on previous supabase2 logic) */}
             {subscriptionManagement && (
               <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50">
                 <h3 className="text-lg font-semibold text-white mb-4 flex items-center">

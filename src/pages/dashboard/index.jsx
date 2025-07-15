@@ -8,7 +8,7 @@ import EventFormFields from '../create-event/components/EventFormFields';
 import StyleSelector from '../create-event/components/StyleSelector';
 import EventSummary from '../create-event/components/EventSummary';
 import LicenseDownload from '../create-event/components/LicenseDownload';
-import { supabase2 } from '../../utils/supabase2'; // Import the new supabase client for supabase2
+// import { supabase2 } from '../../utils/supabase2'; // REMOVED: No longer needed
 
 const Dashboard = () => {
   const { user, userProfile, signOut } = useAuth();
@@ -56,7 +56,7 @@ const Dashboard = () => {
     try {
       const { data, error } = await supabase
         .from('events')
-        .select('*, creditsUsed') // Ensure creditsUsed is selected
+        .select('*, creditsUsed, photosGenerated') // Ensure creditsUsed and photosGenerated are selected
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
@@ -73,61 +73,8 @@ const Dashboard = () => {
     }
   };
 
-  // Function to synchronize credits for a specific event from supabase2 to main supabase
-  const syncCreditsForEvent = async (eventId) => {
-    if (!eventId) {
-      console.warn('syncCreditsForEvent called with null eventId');
-      return;
-    }
-    console.log(`Synchronizing credits for eventId: ${eventId}`);
-    try {
-      // 1. Fetch all creditsUsed for the given eventId from supabase2's inputimagetable
-      const { data, error: fetchError } = await supabase2
-        .from('inputimagetable')
-        .select('creditsUsed')
-        .eq('eventId', eventId);
-
-      if (fetchError) {
-        console.error('Error fetching credits from supabase2:', fetchError);
-        return;
-      }
-      console.log(`Fetched creditsUsed for event ${eventId} from supabase2:`, data);
-
-      // Calculate the total credits used for this event from supabase2
-      const totalCreditsUsedForEvent = data.reduce((sum, item) => sum + (item.creditsUsed || 0), 0);
-      console.log(`Calculated total credits for event ${eventId} in supabase2: ${totalCreditsUsedForEvent}`);
-
-      // 2. Update the main supabase 'events' table with the aggregated creditsUsed
-      const { data: updatedEvent, error: updateError } = await supabase
-        .from('events')
-        .update({ creditsUsed: totalCreditsUsedForEvent })
-        .eq('id', eventId)
-        .eq('user_id', user.id) // Ensure we only update the current user's event
-        .select()
-        .single();
-
-      if (updateError) {
-        console.error('Error updating creditsUsed in main supabase:', updateError);
-        return;
-      }
-
-      console.log(`Updated creditsUsed for event ${eventId} in main supabase to: ${totalCreditsUsedForEvent}`, updatedEvent);
-
-      // 3. Update the local 'events' state to reflect the change immediately
-      setEvents(prevEvents => {
-        const updatedEvents = prevEvents.map(event =>
-          event.id === eventId ? { ...event, creditsUsed: totalCreditsUsedForEvent } : event
-        );
-        // Also update the total aggregated credits display
-        const newTotalAggregated = updatedEvents.reduce((sum, event) => sum + (event.creditsUsed || 0), 0);
-        setTotalAggregatedCreditsUsed(newTotalAggregated);
-        return updatedEvents;
-      });
-
-    } catch (error) {
-      console.error('Unexpected error in syncCreditsForEvent:', error);
-    }
-  };
+  // REMOVED: syncCreditsForEvent is no longer needed as data is assumed to be in the main events table.
+  // const syncCreditsForEvent = async (eventId) => { ... };
 
   useEffect(() => {
     if (!user?.id) {
@@ -194,11 +141,12 @@ const Dashboard = () => {
         }
         setSubscription(processedSubscription);
 
-        // Fetch user's events from main database, which now includes 'creditsUsed'
+        // Fetch user's events from main database, which now includes 'creditsUsed' and 'photosGenerated'
         const eventsData = await fetchEventsFromDatabase();
         setEvents(eventsData);
 
         // Calculate initial total aggregated credits from fetched events
+        // Now directly sum 'creditsUsed' from the events table
         const totalCreditsFromEvents = eventsData.reduce((sum, event) => sum + (event.creditsUsed || 0), 0);
         setTotalAggregatedCreditsUsed(totalCreditsFromEvents);
 
@@ -212,19 +160,21 @@ const Dashboard = () => {
 
     fetchDashboardData();
 
-    // Set up a real-time listener for the inputimagetable in SUPABASE2
+    // REMOVED: Real-time listener for supabase2 inputimagetable
+    // This is no longer needed as we're not syncing from supabase2
+    /*
     const supabase2Channel = supabase2
       .channel('input_image_table_changes')
       .on(
         'postgres_changes',
         {
-          event: '*', // Listen for INSERT or UPDATE events
+          event: '*',
           schema: 'public',
           table: 'inputimagetable'
         },
         async (payload) => {
           console.log('Change received in supabase2 inputimagetable:', payload);
-          const eventId = payload.new?.eventId; // Use payload.new for both INSERT and UPDATE
+          const eventId = payload.new?.eventId;
           if (eventId) {
             // Trigger synchronization for the affected event
             await syncCreditsForEvent(eventId);
@@ -232,19 +182,52 @@ const Dashboard = () => {
         }
       )
       .subscribe();
+    */
 
-    // Cleanup function for the supabase2 listener
+    // Real-time listener for the 'events' table in the main Supabase client
+    // This will now handle updates to 'creditsUsed' and 'photosGenerated' directly
+    const eventsChannel = supabase
+      .channel('events_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE', // Listen for UPDATE events on events table
+          schema: 'public',
+          table: 'events',
+          filter: `user_id=eq.${user.id}` // Only listen to changes for the current user
+        },
+        (payload) => {
+          console.log('Change received in main supabase events table:', payload);
+          const updatedEvent = payload.new;
+          if (updatedEvent) {
+            setEvents(prevEvents => {
+              const newEvents = prevEvents.map(event =>
+                event.id === updatedEvent.id ? updatedEvent : event
+              );
+              // Recalculate total aggregated credits based on the updated events list
+              const newTotalAggregated = newEvents.reduce((sum, event) => sum + (event.creditsUsed || 0), 0);
+              setTotalAggregatedCreditsUsed(newTotalAggregated);
+              return newEvents;
+            });
+          }
+        }
+      )
+      .subscribe();
+
+
+    // Cleanup function for the supabase listener
     return () => {
-      supabase2.removeChannel(supabase2Channel);
+      // supabase2.removeChannel(supabase2Channel); // REMOVED
+      supabase.removeChannel(eventsChannel); // Clean up the new events channel
     };
 
-  }, [user]); // Depend on user to re-run when user changes, and syncCreditsForEvent (implicit due to its dependency on setEvents and setTotalAggregatedCreditsUsed)
+  }, [user]); // Depend on user to re-run when user changes
 
   // Derived values from subscription state
   const hasActiveSubscription = subscription && subscription.status === 'active';
   const planName = subscription?.metadata?.planName || 'No Plan';
   // Use totalAggregatedCreditsUsed for the display
-  const transformsUsedDisplay = totalAggregatedCreditsUsed;
+  const transformsUsedDisplay = totalAggregatedCreditsUsed; // Now directly from aggregated events creditsUsed
   const transformsIncluded = subscription?.metadata?.transformsIncluded ?? 0;
   const transformsRemaining = transformsIncluded - transformsUsedDisplay; // Calculate remaining based on aggregated credits
   const subscriptionCount = subscription?.metadata?.subscriptionCount || 0;
@@ -318,54 +301,57 @@ const Dashboard = () => {
       alert('Failed to save event. Please try again.');
     }
   };
-const saveEventToDatabase = async (eventData) => {
-  console.log('Saving event to database:', eventData);
-  try {
-    const eventToSave = {
-      user_id: user.id,
-      event_name: eventData.eventName,
-      start_date: eventData.startDate,
-      start_time: eventData.startTime,
-      end_date: eventData.endDate,
-      end_time: eventData.endTime,
-      location: eventData.location || '',
-      description: eventData.description || '',
-      selected_styles: eventData.selectedStyles || [],
-      subscription_plan: eventData.subscriptionPlan || 'No Plan',
-      subscription_id: subscription?.id || null,
-      status: 'active',
-      creditsUsed: 0, // Initialize creditsUsed to 0 when creating a new event
-      metadata: {
-        transformsUsedAtCreation: transformsUsedDisplay,
-        transformsIncludedAtCreation: transformsIncluded,
-        userEmail: user.email,
-        userName: userProfile?.username || userProfile?.full_name || 'Unknown'
+  const saveEventToDatabase = async (eventData) => {
+    console.log('Saving event to database:', eventData);
+    try {
+      const eventToSave = {
+        user_id: user.id,
+        event_name: eventData.eventName,
+        start_date: eventData.startDate,
+        start_time: eventData.startTime,
+        end_date: eventData.endDate,
+        end_time: eventData.endTime,
+        location: eventData.location || '',
+        description: eventData.description || '',
+        selected_styles: eventData.selectedStyles || [],
+        subscription_plan: eventData.subscriptionPlan || 'No Plan',
+        subscription_id: subscription?.id || null,
+        status: 'active',
+        creditsUsed: 0, // Initialize creditsUsed to 0 when creating a new event
+        photosGenerated: 0, // Initialize photosGenerated to 0 when creating a new event
+        metadata: {
+          transformsUsedAtCreation: transformsUsedDisplay,
+          transformsIncludedAtCreation: transformsIncluded,
+          userEmail: user.email,
+          userName: userProfile?.username || userProfile?.full_name || 'Unknown'
+        }
+      };
+
+      const { data, error } = await supabase
+        .from('events')
+        .insert([eventToSave])
+        .select('*')
+        .single();
+
+      if (error) {
+        console.error('Error saving event:', error);
+        throw error;
       }
-    };
 
-    // Fix: Remove the columns parameter and use proper insert + select chain
-    const { data, error } = await supabase
-      .from('events')
-      .insert([eventToSave])
-      .select('*') // Use select('*') instead of just select()
-      .single();
+      console.log('Event saved successfully:', data);
 
-    if (error) {
-      console.error('Error saving event:', error);
+      // Update events list immediately with the new event
+      setEvents(prev => [data, ...prev]);
+
+      // Update total aggregated credits with the newly initialized creditsUsed
+      setTotalAggregatedCreditsUsed(prev => prev + (data.creditsUsed || 0));
+
+      return data;
+    } catch (error) {
+      console.error('Failed to save event to database:', error);
       throw error;
     }
-
-    console.log('Event saved successfully:', data);
-
-    // Update events list immediately with the new event
-    setEvents(prev => [data, ...prev]);
-
-    return data;
-  } catch (error) {
-    console.error('Failed to save event to database:', error);
-    throw error;
-  }
-};
+  };
 
   const updateEventWithLicense = async (eventId, licenseKey) => {
     try {
@@ -603,9 +589,12 @@ const saveEventToDatabase = async (eventData) => {
               </div>
             </div>
             <div className="mb-2">
-              <span className="text-2xl font-bold text-white">0</span>
+              {/* This should probably be derived from `photosGenerated` across all events */}
+              <span className="text-2xl font-bold text-white">
+                {events.reduce((sum, event) => sum + (event.photosGenerated || 0), 0)}
+              </span>
             </div>
-            <p className="text-slate-400 text-sm">Total Guests Served</p>
+            <p className="text-slate-400 text-sm">Photos Generated</p>
           </div>
           <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50">
             <div className="flex items-center justify-between mb-4">
@@ -614,6 +603,7 @@ const saveEventToDatabase = async (eventData) => {
               </div>
             </div>
             <div className="mb-2">
+              {/* This likely needs a dedicated field in 'events' or a separate table for downloads */}
               <span className="text-2xl font-bold text-white">0</span>
             </div>
             <p className="text-slate-400 text-sm">Photos Downloaded</p>
@@ -669,6 +659,12 @@ const saveEventToDatabase = async (eventData) => {
                               <span className="text-violet-300">{event.creditsUsed} credits used</span>
                             </>
                           )}
+                          {event.photosGenerated > 0 && (
+                            <>
+                              <span>•</span>
+                              <span className="text-violet-300">{event.photosGenerated} photos generated</span>
+                            </>
+                          )}
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
@@ -715,7 +711,6 @@ const saveEventToDatabase = async (eventData) => {
                   <Icon name="Crown" size={20} className="text-violet-400" />
                 </div>
                 <div className="text-2xl font-bold text-white mb-1">{transformsRemaining < 0 ? 0 : transformsRemaining}</div>
-                <div className="text-sm text-slate-400">transformations remaining</div>
               </div>
               <Button
                 variant="outline"
