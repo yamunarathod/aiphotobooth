@@ -322,7 +322,7 @@ const Dashboard = () => {
         metadata: {
           transformsUsedAtCreation: transformsUsedDisplay,
           transformsIncludedAtCreation: transformsIncluded,
-          userEmail: user.email,
+          email: user.email,
           userName: userProfile?.username || userProfile?.full_name || 'Unknown'
         }
       };

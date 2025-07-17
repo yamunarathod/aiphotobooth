@@ -1,8 +1,6 @@
 // utils/razorpay.js - Complete Fixed Version
 import {
-  createPaymentRecord,
-  updatePaymentRecord,
-  createSubscriptionRecord,
+  createSubscriptionRecord, // Removed updatePaymentRecord as it's not needed now
   updateUserSubscription
 } from '../services/paymentService'
 
@@ -46,39 +44,6 @@ export const makeRazorpayPayment = async ({
   const paymentRecordId = generateUUID()
 
   try {
-    // Create minimal payment record with explicit ID
-    const initialPaymentData = {
-      id: paymentRecordId, // Explicit ID to avoid service return issues
-      userId,
-      amount: Math.round(amountInRupees * 100),
-      currency: 'INR',
-      status: 'initiated',
-      metadata: {
-        userEmail: email,
-        userName: name,
-        planId: planDetails.id,
-        planName: planDetails.name,
-        billingCycle,
-        eventSize,
-        paymentMethod: 'razorpay',
-        transformsIncluded: planDetails.transformsIncluded,
-        features: planDetails.features,
-        userAgent: navigator.userAgent,
-        timestamp: new Date().toISOString()
-      }
-    }
-
-    console.log('Creating payment record with ID:', paymentRecordId)
-    
-    // Create payment record - ignore return value since we're using explicit ID
-    try {
-      await createPaymentRecord(initialPaymentData)
-      console.log('Payment record created successfully')
-    } catch (error) {
-      console.error('Failed to create payment record:', error)
-      // Continue anyway as we'll track the payment manually
-    }
-
     const options = {
       key: "rzp_test_WT0igFhb5cfHNE",
       amount: amountInRupees * 100,
@@ -89,13 +54,36 @@ export const makeRazorpayPayment = async ({
       handler: async function (response) {
         try {
           console.log('Payment success response:', response)
-          console.log('Updating payment record ID:', paymentRecordId)
+          const subscriptionId = generateUUID()
 
-          const updateData = {
-            status: 'completed',
-            razorpayPaymentId: response.razorpay_payment_id,
+          const subscriptionData = {
+            id: subscriptionId,
+            userId,
+            amount: Math.round(amountInRupees * 100),
+            currency: 'INR',
+            status: 'active',
+            payment_status: 'completed', // New field
+            payment_reference_number: response.razorpay_payment_id, // New field for razorpayPaymentId
+            razorpay_payment_id: response.razorpay_payment_id, // Specific Razorpay ID
+            razorpay_order_id: response.razorpay_order_id || null,
+            razorpay_signature: response.razorpay_signature || null,
+            mode_of_payment: 'Razorpay', // New field
+            user_name: name, // New field
+            user_email: email, // New field
+            plan_id: planDetails.id, // New field
+            plan_name: planDetails.name, // New field
+            credits_included: planDetails.transformsIncluded, // New field
+            credits_used: 0, // New field
+            billing_cycle: billingCycle,
+            event_size: eventSize,
+            transforms_included: planDetails.transformsIncluded,
+            transforms_used: 0,
+            features: planDetails.features,
+            start_date: new Date().toISOString(), // New field
+            next_billing_date: getNextBillingDate(billingCycle),
+            auto_renew: true, // New field
+            payment_date: new Date().toISOString(), // New field for payment date/time
             metadata: {
-              ...initialPaymentData.metadata,
               completedAt: new Date().toISOString(),
               razorpayResponse: {
                 razorpay_payment_id: response.razorpay_payment_id,
@@ -104,43 +92,6 @@ export const makeRazorpayPayment = async ({
               }
             }
           }
-
-          try {
-            await updatePaymentRecord(paymentRecordId, updateData)
-            console.log('Payment record updated successfully')
-          } catch (updateError) {
-            console.error('Failed to update payment record:', updateError)
-            // Continue with subscription creation even if update fails
-          }
-
-          // Create subscription record with explicit ID
-          const subscriptionId = generateUUID()
-          // Inside the handler function in razorpay.js
-
-const subscriptionData = {
-  id: subscriptionId,
-  userId,
-  // Convert to paise and ensure it's an integer
-  amount: Math.round(amountInRupees * 100), 
-  currency: 'INR',
-  status: 'active',
-  metadata: {
-    userEmail: email,
-    userName: name,
-    paymentId: paymentRecordId,
-    planId: planDetails.id,
-    planName: planDetails.name,
-    billingCycle,
-    eventSize,
-    transformsIncluded: planDetails.transformsIncluded,
-    transformsUsed: 0,
-    features: planDetails.features,
-    startDate: new Date().toISOString(),
-    nextBillingDate: getNextBillingDate(billingCycle),
-    autoRenew: true,
-    razorpayPaymentId: response.razorpay_payment_id
-  }
-}
 
           try {
             await createSubscriptionRecord(subscriptionData)
@@ -155,8 +106,8 @@ const subscriptionData = {
             planId: planDetails.id,
             subscriptionId,
             status: 'active',
-            transformsRemaining: planDetails.transformsIncluded === 'unlimited' 
-              ? 'unlimited' 
+            transformsRemaining: planDetails.transformsIncluded === 'unlimited'
+              ? 'unlimited'
               : parseInt(planDetails.transformsIncluded),
             metadata: {
               planName: planDetails.name,
@@ -175,35 +126,20 @@ const subscriptionData = {
             throw new Error('Failed to update user subscription')
           }
 
-          onSuccess({ 
-            ...response, 
-            subscriptionId, 
+          onSuccess({
+            ...response,
+            subscriptionId,
             paymentRecordId,
-            message: 'Payment completed successfully!' 
+            message: 'Payment completed successfully!'
           })
-          
+
         } catch (error) {
           console.error('Error processing payment success:', error)
-          
-          // Try to update payment record with error status
-          try {
-            await updatePaymentRecord(paymentRecordId, {
-              status: 'processing_error',
-              metadata: {
-                ...initialPaymentData.metadata,
-                error: error.message,
-                errorAt: new Date().toISOString(),
-                razorpayResponse: response
-              }
-            })
-          } catch (updateError) {
-            console.error('Failed to update payment record with error:', updateError)
-          }
-          
-          onFailure({ 
-            error: { 
+
+          onFailure({
+            error: {
               description: 'Payment succeeded but subscription activation failed. Please contact support with payment ID: ' + response.razorpay_payment_id
-            } 
+            }
           })
         }
       },
@@ -217,42 +153,16 @@ const subscriptionData = {
       modal: {
         ondismiss: async function () {
           console.log('Payment modal dismissed')
-          
-          try {
-            await updatePaymentRecord(paymentRecordId, {
-              status: 'cancelled',
-              metadata: {
-                ...initialPaymentData.metadata,
-                cancelledAt: new Date().toISOString(),
-                cancellationReason: 'user_dismissed_modal'
-              }
-            })
-          } catch (error) {
-            console.error('Failed to update payment record on dismiss:', error)
-          }
+          // No action needed for payment record update as we are only using subscription table
         }
       }
     }
 
     const rzp = new window.Razorpay(options)
-    
+
     rzp.on("payment.failed", async function (response) {
       console.log('Payment failed:', response)
-      
-      try {
-        await updatePaymentRecord(paymentRecordId, {
-          status: 'failed',
-          metadata: {
-            ...initialPaymentData.metadata,
-            failedAt: new Date().toISOString(),
-            error: response.error,
-            razorpayError: response.error
-          }
-        })
-      } catch (error) {
-        console.error('Failed to update payment record on failure:', error)
-      }
-      
+      // No action needed for payment record update as we are only using subscription table
       onFailure(response.error)
     })
 
@@ -260,23 +170,10 @@ const subscriptionData = {
 
   } catch (error) {
     console.error('Error initiating payment:', error)
-    
-    try {
-      await updatePaymentRecord(paymentRecordId, {
-        status: 'initialization_failed',
-        metadata: {
-          error: error.message,
-          failedAt: new Date().toISOString()
-        }
-      })
-    } catch (updateError) {
-      console.error('Failed to update payment record on init error:', updateError)
-    }
-    
-    onFailure({ 
-      error: { 
-        description: `Failed to initialize payment: ${error.message}` 
-      } 
+    onFailure({
+      error: {
+        description: `Failed to initialize payment: ${error.message}`
+      }
     })
   }
 }

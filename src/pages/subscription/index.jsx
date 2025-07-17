@@ -154,7 +154,7 @@ const SubscriptionPage = () => {
 
         await createPaymentRecord({
           userId: databaseUserId, // Use database UUID
-          userEmail: email,
+          email: email,
           userName: name,
           planId: planId,
           planName: plan.name,
