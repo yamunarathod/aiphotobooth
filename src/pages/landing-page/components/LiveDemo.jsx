@@ -87,7 +87,7 @@ const LiveDemo = () => {
       try {
         // Upload to Supabase storage
         const { data, error } = await supabase.storage
-          .from('inputimages')
+          .from('website-input-images')
           .upload(`${newUuid}`, file, {
             contentType: file.type,
             upsert: false
@@ -100,7 +100,7 @@ const LiveDemo = () => {
 
         // Get public URL
         const { data: urlData } = supabase.storage
-          .from('inputimages')
+          .from('website-input-images')
           .getPublicUrl(`${newUuid}`);
 
         // Insert record to inputimagetable
