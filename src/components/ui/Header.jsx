@@ -23,13 +23,17 @@ const Header = () => {
   ];
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-[#0f0f23]/95 backdrop-blur-sm border-b border-slate-800">
+   <header className="fixed top-0 left-0 right-0 z-50 bg-[#0f0f23]/95 backdrop-blur-sm border-b border-slate-800">
       <div className="container mx-auto px-6">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-violet-500 to-purple-600 rounded-lg flex items-center justify-center">
-              <Icon name="Sparkles" size={20} color="white" />
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden">
+              <img 
+                src="/assets/images/logo.png" 
+                alt="Photobooth AI Logo" 
+                className="w-full h-full object-contain"
+              />
             </div>
             <div>
               <span className="text-xl font-bold text-white">Photobooth AI</span>
