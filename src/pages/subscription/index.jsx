@@ -40,7 +40,6 @@ const SubscriptionPage = () => {
       navigate("/login")
     }
   }
-<<<<<<< HEAD
 
   const plans = [
     {
@@ -60,31 +59,10 @@ const SubscriptionPage = () => {
         "Mobile app access",
       ],
       limitations: ["No custom branding", "Standard processing speed"],
-=======
-const plans = [
-    {
-      id: "starter",
-      name: "Starter",
-      description: "Perfect for getting started with AI photo generation",
-      monthlyPrice: 24, // 2000 INR converted to USD (approx $24)
-      yearlyPrice: 19, // 20% discount for yearly
-      transformsIncluded: 100,
-      features: [
-        "100 AI photo credits (never expire)",
-        "Basic face swap style",
-        "HD quality downloads",
-        "Email support",
-        "Mobile app access",
-        "Basic photo editing",
-        "Credits roll over monthly",
-      ],
-      limitations: ["Limited to face swap only", "No advanced styles"],
->>>>>>> abraham
       popular: false,
       color: "blue",
     },
     {
-<<<<<<< HEAD
       id: "professional",
       name: "Professional",
       description: "Most popular for wedding & event planners",
@@ -101,31 +79,11 @@ const plans = [
         "Analytics dashboard",
         "Custom style creation",
         "Bulk processing",
-=======
-      id: "pro",
-      name: "Pro",
-      description: "Most popular for unlimited creativity",
-      monthlyPrice: 60, // 5000 INR converted to USD (approx $60)
-      yearlyPrice: 48, // 20% discount for yearly
-      transformsIncluded: 250,
-      features: [
-        "250 AI photo credits (never expire)",
-        "All premium art styles",
-        "Advanced face swap",
-        "Style mixing & blending",
-        "HD quality downloads",
-        "Priority support",
-        "Bulk processing",
-        "Custom style creation",
-        "Advanced photo editing",
-        "Credits roll over monthly",
->>>>>>> abraham
       ],
       limitations: [],
       popular: true,
       color: "violet",
     },
-<<<<<<< HEAD
     {
       id: "enterprise",
       name: "Enterprise",
@@ -149,8 +107,6 @@ const plans = [
       popular: false,
       color: "amber",
     },
-=======
->>>>>>> abraham
   ]
 
   const calculatePrice = (plan) => {
@@ -350,7 +306,6 @@ Your subscription is now active!`)
           </div>
 
           {/* Event Size Slider */}
-<<<<<<< HEAD
           <div className="max-w-2xl mx-auto mb-12">
             <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-2xl p-8 border border-slate-700/50">
               <h3 className="text-xl font-semibold text-white mb-6 text-center">Customize for Your Event Size</h3>
@@ -397,9 +352,6 @@ Your subscription is now active!`)
               </div>
             </div>
           </div>
-=======
-          
->>>>>>> abraham
 
           {/* Billing Toggle */}
           <div className="flex justify-center mb-12">
@@ -425,11 +377,7 @@ Your subscription is now active!`)
           </div>
 
           {/* Pricing Cards */}
-<<<<<<< HEAD
           <div className="grid lg:grid-cols-3 gap-8 mb-16">
-=======
-     <div className="grid lg:grid-cols-2 gap-8 mb-16 justify-center mx-auto max-w-4xl">
->>>>>>> abraham
             {plans.map((plan) => (
               <div
                 key={plan.id}
@@ -455,11 +403,7 @@ Your subscription is now active!`)
 
                   <div className="mb-4">
                     <span className="text-4xl font-bold text-white">${calculatePrice(plan)}</span>
-<<<<<<< HEAD
                     <span className="text-slate-400 ml-2">/{billingCycle === "monthly" ? "month" : "year"}</span>
-=======
-                    <span className="text-slate-400 ml-2">/{billingCycle === "monthly" ? "month" : "month"}</span>
->>>>>>> abraham
                   </div>
 
                   {billingCycle === "yearly" && (
