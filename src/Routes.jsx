@@ -16,6 +16,10 @@ import EventManagement from "pages/event-management";
 import CreateEvent from "pages/create-event";
 import UserProfile from "pages/user-profile";
 import EventDetails from "pages/event-details";
+<<<<<<< HEAD
+=======
+import EventGallery from "pages/EventGallery";
+>>>>>>> abraham
 
 // Component to protect auth routes (login/signup) from logged-in users
 export const AuthRoute = ({ children }) => {
@@ -91,6 +95,14 @@ const Routes = () => {
                 </AuthRoute>
               }
             />
+<<<<<<< HEAD
+=======
+            <Route path="/event/:eventId/gallery" element={
+    <PrivateRoute>
+        <EventGallery />
+    </PrivateRoute>
+} />
+>>>>>>> abraham
             <Route path="/event-management" element={<EventManagement />} />
             <Route path="/create-event" element={<CreateEvent />} />
             <Route path="/user-profile" element={<UserProfile />} />
