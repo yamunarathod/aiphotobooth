@@ -541,7 +541,7 @@
       ],
       "supabase_url": "https://ozkbnimjuhaweigscdby.supabase.co",
       "supabase_key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im96a2JuaW1qdWhhd2VpZ3NjZGJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEyODc4NDYsImV4cCI6MjA2Njg2Mzg0Nn0.C4OgN-JEBX9ZqnRDXU9XmGnED2pCh3kI82GrHPXtq8U",
-      "bucket": "outputimages",
+      "bucket": "website-output-images",
       "base_file_name": "image",
       "table_name": "inputimagetable",
       "unique_id_column": "unique_id",

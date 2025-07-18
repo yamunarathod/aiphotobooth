@@ -40,72 +40,49 @@ const SubscriptionPage = () => {
       navigate("/login")
     }
   }
-
-  const plans = [
+const plans = [
     {
       id: "starter",
       name: "Starter",
-      description: "Perfect for small events and testing",
-      monthlyPrice: 49,
-      yearlyPrice: 39,
-      transformsIncluded: 200,
+      description: "Perfect for getting started with AI photo generation",
+      monthlyPrice: 24, // 2000 INR converted to USD (approx $24)
+      yearlyPrice: 19, // 20% discount for yearly
+      transformsIncluded: 100,
       features: [
-        "100 AI transformations/month",
-        "2 art styles included",
-        "Basic customization",
+        "100 AI photo credits (never expire)",
+        "Basic face swap style",
+        "HD quality downloads",
         "Email support",
-        "Social media sharing",
-        "HD quality exports",
         "Mobile app access",
+        "Basic photo editing",
+        "Credits roll over monthly",
       ],
-      limitations: ["No custom branding", "Standard processing speed"],
+      limitations: ["Limited to face swap only", "No advanced styles"],
       popular: false,
       color: "blue",
     },
     {
-      id: "professional",
-      name: "Professional",
-      description: "Most popular for wedding & event planners",
-      monthlyPrice: 149,
-      yearlyPrice: 119,
-      transformsIncluded: 1000,
+      id: "pro",
+      name: "Pro",
+      description: "Most popular for unlimited creativity",
+      monthlyPrice: 60, // 5000 INR converted to USD (approx $60)
+      yearlyPrice: 48, // 20% discount for yearly
+      transformsIncluded: 250,
       features: [
-        "500 AI transformations/month",
-        "4+ art styles included",
-        "Full brand customization",
+        "250 AI photo credits (never expire)",
+        "All premium art styles",
+        "Advanced face swap",
+        "Style mixing & blending",
+        "HD quality downloads",
         "Priority support",
-        "Advanced sharing options",
-        "4K quality exports",
-        "Analytics dashboard",
-        "Custom style creation",
         "Bulk processing",
+        "Custom style creation",
+        "Advanced photo editing",
+        "Credits roll over monthly",
       ],
       limitations: [],
       popular: true,
       color: "violet",
-    },
-    {
-      id: "enterprise",
-      name: "Enterprise",
-      description: "Unlimited power for agencies & corporations",
-      monthlyPrice: 399,
-      yearlyPrice: 319,
-      transformsIncluded: "unlimited",
-      features: [
-        "Unlimited AI transformations",
-        "All art styles + custom styles",
-        "White-label solution",
-        "Dedicated account manager",
-        "API access",
-        "8K quality exports",
-        "Advanced analytics",
-        "Multi-brand management",
-        "Priority processing",
-        "Custom integrations",
-      ],
-      limitations: [],
-      popular: false,
-      color: "amber",
     },
   ]
 
@@ -306,52 +283,7 @@ Your subscription is now active!`)
           </div>
 
           {/* Event Size Slider */}
-          <div className="max-w-2xl mx-auto mb-12">
-            <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-2xl p-8 border border-slate-700/50">
-              <h3 className="text-xl font-semibold text-white mb-6 text-center">Customize for Your Event Size</h3>
-
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-slate-300 mb-4">
-                  Expected Guests: <span className="text-violet-400 font-bold">{eventSize}</span>
-                </label>
-                <input
-                  type="range"
-                  min="25"
-                  max="1000"
-                  value={eventSize}
-                  onChange={(e) => setEventSize(Number.parseInt(e.target.value))}
-                  className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer slider"
-                  style={{
-                    background: `linear-gradient(to right, #8b5cf6 0%, #8b5cf6 ${((eventSize - 25) / 975) * 100}%, #374151 ${((eventSize - 25) / 975) * 100}%, #374151 100%)`,
-                  }}
-                />
-                <div className="flex justify-between text-xs text-slate-400 mt-2">
-                  <span>25</span>
-                  <span>250</span>
-                  <span>500</span>
-                  <span>1000+</span>
-                </div>
-              </div>
-              <div className="grid grid-cols-3 gap-4 text-center">
-                <div className="bg-slate-700/50 rounded-lg p-3">
-                  <div className="text-lg font-bold text-violet-400">{Math.round(eventSize * 0.8)}</div>
-                  <div className="text-xs text-slate-400">Expected Photos</div>
-                </div>
-                <div className="bg-slate-700/50 rounded-lg p-3">
-                  <div className="text-lg font-bold text-green-400">
-                    ${Math.round(1500 * getEventSizeMultiplier()).toLocaleString()}
-                  </div>
-                  <div className="text-xs text-slate-400">Traditional Cost</div>
-                </div>
-                <div className="bg-slate-700/50 rounded-lg p-3">
-                  <div className="text-lg font-bold text-amber-400">
-                    ${Math.round(300 * getEventSizeMultiplier()).toLocaleString()}
-                  </div>
-                  <div className="text-xs text-slate-400">AI Photobooth Cost</div>
-                </div>
-              </div>
-            </div>
-          </div>
+          
 
           {/* Billing Toggle */}
           <div className="flex justify-center mb-12">
@@ -377,7 +309,7 @@ Your subscription is now active!`)
           </div>
 
           {/* Pricing Cards */}
-          <div className="grid lg:grid-cols-3 gap-8 mb-16">
+     <div className="grid lg:grid-cols-2 gap-8 mb-16 justify-center mx-auto max-w-4xl">
             {plans.map((plan) => (
               <div
                 key={plan.id}
@@ -403,7 +335,7 @@ Your subscription is now active!`)
 
                   <div className="mb-4">
                     <span className="text-4xl font-bold text-white">${calculatePrice(plan)}</span>
-                    <span className="text-slate-400 ml-2">/{billingCycle === "monthly" ? "month" : "year"}</span>
+                    <span className="text-slate-400 ml-2">/{billingCycle === "monthly" ? "month" : "month"}</span>
                   </div>
 
                   {billingCycle === "yearly" && (

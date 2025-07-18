@@ -8,7 +8,6 @@ import EventFormFields from '../create-event/components/EventFormFields';
 import StyleSelector from '../create-event/components/StyleSelector';
 import EventSummary from '../create-event/components/EventSummary';
 import LicenseDownload from '../create-event/components/LicenseDownload';
-// import { supabase2 } from '../../utils/supabase2'; // REMOVED: No longer needed
 
 const Dashboard = () => {
   const { user, userProfile, signOut } = useAuth();
@@ -23,7 +22,8 @@ const Dashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [subscription, setSubscription] = useState(null);
   const [events, setEvents] = useState([]);
-  const [totalAggregatedCreditsUsed, setTotalAggregatedCreditsUsed] = useState(0); // State for total credits used across all events
+  const [totalAggregatedCreditsUsed, setTotalAggregatedCreditsUsed] = useState(0);
+  const [totalImagesGenerated, setTotalImagesGenerated] = useState(0); // NEW: State for total images generated
 
   // Event creation flow states
   const [step, setStep] = useState(null);
@@ -39,7 +39,7 @@ const Dashboard = () => {
   const [errors, setErrors] = useState({});
   const [selectedStyles, setSelectedStyles] = useState([]);
   const [createdEvent, setCreatedEvent] = useState(null);
-  const [savedEventId, setSavedEventId] = useState(null); // New state to store the saved event ID
+  const [savedEventId, setSavedEventId] = useState(null);
 
   // Default object for users without a subscription
   const noSubscription = {
@@ -72,9 +72,6 @@ const Dashboard = () => {
       return [];
     }
   };
-
-  // REMOVED: syncCreditsForEvent is no longer needed as data is assumed to be in the main events table.
-  // const syncCreditsForEvent = async (eventId) => { ... };
 
   useEffect(() => {
     if (!user?.id) {
@@ -152,14 +149,21 @@ const Dashboard = () => {
         }
         setSubscription(processedSubscription);
 
-        // Fetch user's events from main database, which now includes 'creditsUsed' and 'photosGenerated'
+        // Fetch user's events from main database
         const eventsData = await fetchEventsFromDatabase();
         setEvents(eventsData);
 
-        // Calculate initial total aggregated credits from fetched events
-        // Now directly sum 'creditsUsed' from the events table
+        // Calculate total aggregated credits from fetched events
         const totalCreditsFromEvents = eventsData.reduce((sum, event) => sum + (event.metadata?.creditsUsed || 0), 0);
         setTotalAggregatedCreditsUsed(totalCreditsFromEvents);
+
+        // NEW: Calculate total images generated from fetched events
+        const totalImagesFromEvents = eventsData.reduce((sum, event) => {
+          // Check both direct field and metadata field for images_generated
+          const imagesGenerated = event.images_generated || event.metadata?.photosGenerated || 0;
+          return sum + imagesGenerated;
+        }, 0);
+        setTotalImagesGenerated(totalImagesFromEvents);
 
         // Fetch user credits from user_credits table
         const { data: userCredits, error: creditsError } = await supabase
@@ -190,41 +194,16 @@ const Dashboard = () => {
 
     fetchDashboardData();
 
-    // REMOVED: Real-time listener for supabase2 inputimagetable
-    // This is no longer needed as we're not syncing from supabase2
-    /*
-    const supabase2Channel = supabase2
-      .channel('input_image_table_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'inputimagetable'
-        },
-        async (payload) => {
-          console.log('Change received in supabase2 inputimagetable:', payload);
-          const eventId = payload.new?.eventId;
-          if (eventId) {
-            // Trigger synchronization for the affected event
-            await syncCreditsForEvent(eventId);
-          }
-        }
-      )
-      .subscribe();
-    */
-
     // Real-time listener for the 'events' table in the main Supabase client
-    // This will now handle updates to 'creditsUsed' and 'photosGenerated' directly
     const eventsChannel = supabase
       .channel('events_changes')
       .on(
         'postgres_changes',
         {
-          event: 'UPDATE', // Listen for UPDATE events on events table
+          event: 'UPDATE',
           schema: 'public',
           table: 'events',
-          filter: `user_id=eq.${user.id}` // Only listen to changes for the current user
+          filter: `user_id=eq.${user.id}`
         },
         (payload) => {
           console.log('Change received in main supabase events table:', payload);
@@ -234,9 +213,18 @@ const Dashboard = () => {
               const newEvents = prevEvents.map(event =>
                 event.id === updatedEvent.id ? updatedEvent : event
               );
-              // Recalculate total aggregated credits based on the updated events list
+              
+              // Recalculate total aggregated credits
               const newTotalAggregated = newEvents.reduce((sum, event) => sum + (event.metadata?.creditsUsed || 0), 0);
               setTotalAggregatedCreditsUsed(newTotalAggregated);
+              
+              // NEW: Recalculate total images generated
+              const newTotalImages = newEvents.reduce((sum, event) => {
+                const imagesGenerated = event.images_generated || event.metadata?.photosGenerated || 0;
+                return sum + imagesGenerated;
+              }, 0);
+              setTotalImagesGenerated(newTotalImages);
+              
               return newEvents;
             });
           }
@@ -244,22 +232,19 @@ const Dashboard = () => {
       )
       .subscribe();
 
-
-    // Cleanup function for the supabase listener
+    // Cleanup function
     return () => {
-      // supabase2.removeChannel(supabase2Channel); // REMOVED
-      supabase.removeChannel(eventsChannel); // Clean up the new events channel
+      supabase.removeChannel(eventsChannel);
     };
 
-  }, [user]); // Depend on user to re-run when user changes
+  }, [user]);
 
   // Derived values from subscription state
   const hasActiveSubscription = subscription && subscription.status === 'active';
   const planName = subscription?.metadata?.planName || 'No Plan';
-  // Use totalAggregatedCreditsUsed for the display
-  const transformsUsedDisplay = totalAggregatedCreditsUsed; // Now directly from aggregated events creditsUsed
+  const transformsUsedDisplay = totalAggregatedCreditsUsed;
   const transformsIncluded = subscription?.metadata?.transformsIncluded ?? 0;
-  const transformsRemaining = transformsIncluded - transformsUsedDisplay; // Calculate remaining based on aggregated credits
+  const transformsRemaining = transformsIncluded - transformsUsedDisplay;
   const subscriptionCount = subscription?.metadata?.subscriptionCount || 0;
 
   // Determine max styles based on plan name from metadata
@@ -275,7 +260,7 @@ const Dashboard = () => {
   };
   const maxStyles = getMaxStyles();
 
-  // Handlers (rest of handlers remain the same)
+  // Handlers (keeping existing handlers)
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -329,7 +314,6 @@ const Dashboard = () => {
     } catch (error) {
       console.error('Error saving event:', error);
       
-      // Show more specific error message
       let errorMessage = 'Failed to save event. ';
       if (error.message.includes('Network connection error')) {
         errorMessage = error.message;
@@ -342,14 +326,14 @@ const Dashboard = () => {
       alert(errorMessage);
     }
   };
+
   const saveEventToDatabase = async (eventData) => {
     console.log('Saving event to database:', eventData);
     try {
-      // Format dates properly for Supabase
       const formatDate = (date) => {
         if (!date) return null;
         if (date instanceof Date) {
-          return date.toISOString().split('T')[0]; // Returns YYYY-MM-DD
+          return date.toISOString().split('T')[0];
         }
         return date;
       };
@@ -367,13 +351,14 @@ const Dashboard = () => {
         subscription_plan: eventData.subscriptionPlan || 'No Plan',
         subscription_id: subscription?.id || null,
         status: 'active',
+        images_generated: 0, // NEW: Initialize images_generated field
         metadata: {
           transformsUsedAtCreation: transformsUsedDisplay,
           transformsIncludedAtCreation: transformsIncluded,
           email: user.email,
           userName: userProfile?.username || userProfile?.full_name || 'Unknown',
-          creditsUsed: 0, // Store in metadata instead
-          photosGenerated: 0 // Store in metadata instead
+          creditsUsed: 0,
+          photosGenerated: 0
         }
       };
 
@@ -389,7 +374,6 @@ const Dashboard = () => {
         console.error('Error saving event:', error);
         console.error('Event data that failed:', eventToSave);
         
-        // Check for specific error types
         if (error.message.includes('Failed to fetch') || error.message.includes('ERR_INTERNET_DISCONNECTED')) {
           throw new Error('Network connection error. Please check your internet connection and try again.');
         }
@@ -401,8 +385,9 @@ const Dashboard = () => {
       // Update events list immediately with the new event
       setEvents(prev => [data, ...prev]);
 
-      // Update total aggregated credits with the newly initialized creditsUsed
+      // Update totals
       setTotalAggregatedCreditsUsed(prev => prev + (data.metadata?.creditsUsed || 0));
+      setTotalImagesGenerated(prev => prev + (data.images_generated || 0));
 
       return data;
     } catch (error) {
@@ -448,14 +433,6 @@ const Dashboard = () => {
     const result = await signOut();
     if (result?.success) navigate('/');
   };
-
-  // This function is no longer needed as we're using the subscriptions table
-  // which already tracks all necessary subscription and credit data
-  /*
-  const saveSubscriptionManagementData = async (eventId, userId, eventName) => {
-    // Deprecated - using subscriptions table instead
-  };
-  */
 
   const downloadLicense = (eventData) => {
     const licenseContent = ` `.trim();
@@ -539,7 +516,7 @@ const Dashboard = () => {
                 <Icon name="Sparkles" size={24} color="white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-white"> Photobooth AI</h1>
+                <h1 className="text-xl font-bold text-white">Photobooth AI</h1>
                 <p className="text-sm text-slate-400">Dashboard</p>
               </div>
             </div>
@@ -577,6 +554,7 @@ const Dashboard = () => {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {/* Existing Images Generated card */}
           <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50">
             <div className="flex items-center justify-between mb-4">
               <div className="bg-violet-500/20 rounded-lg p-3">
@@ -584,11 +562,10 @@ const Dashboard = () => {
               </div>
             </div>
             <div className="mb-2">
-              {/* Use transformsUsedDisplay here */}
-              <span className="text-2xl font-bold text-white">{transformsUsedDisplay}</span>
-              <span className="text-slate-400 text-sm ml-2">/ {transformsIncluded}</span>
+              <span className="text-2xl font-bold text-white">{totalImagesGenerated}</span>
+              <span className="text-slate-400 text-sm ml-2">total</span>
             </div>
-            <p className="text-slate-400 text-sm">Transformations Used</p>
+            <p className="text-slate-400 text-sm">Images Generated</p>
             {subscriptionCount > 1 && (
               <p className="text-xs text-violet-400 mt-1">
                 {subscriptionCount} active subscriptions
@@ -605,32 +582,6 @@ const Dashboard = () => {
               <span className="text-2xl font-bold text-white">{events.length}</span>
             </div>
             <p className="text-slate-400 text-sm">Events This Month</p>
-          </div>
-          <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50">
-            <div className="flex items-center justify-between mb-4">
-              <div className="bg-violet-500/20 rounded-lg p-3">
-                <Icon name="Users" size={24} className="text-violet-400" />
-              </div>
-            </div>
-            <div className="mb-2">
-              {/* This should probably be derived from `photosGenerated` across all events */}
-              <span className="text-2xl font-bold text-white">
-                {events.reduce((sum, event) => sum + (event.metadata?.photosGenerated || 0), 0)}
-              </span>
-            </div>
-            <p className="text-slate-400 text-sm">Photos Generated</p>
-          </div>
-          <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700/50">
-            <div className="flex items-center justify-between mb-4">
-              <div className="bg-violet-500/20 rounded-lg p-3">
-                <Icon name="Download" size={24} className="text-violet-400" />
-              </div>
-            </div>
-            <div className="mb-2">
-              {/* This likely needs a dedicated field in 'events' or a separate table for downloads */}
-              <span className="text-2xl font-bold text-white">0</span>
-            </div>
-            <p className="text-slate-400 text-sm">Photos Downloaded</p>
           </div>
         </div>
 
@@ -683,10 +634,13 @@ const Dashboard = () => {
                               <span className="text-violet-300">{event.metadata.creditsUsed} credits used</span>
                             </>
                           )}
-                          {event.metadata?.photosGenerated > 0 && (
+                          {/* NEW: Display images generated for each event */}
+                          {(event.images_generated > 0 || event.metadata?.photosGenerated > 0) && (
                             <>
                               <span>•</span>
-                              <span className="text-violet-300">{event.metadata.photosGenerated} photos generated</span>
+                              <span className="text-green-300">
+                                {event.images_generated || event.metadata?.photosGenerated || 0} images generated
+                              </span>
                             </>
                           )}
                         </div>
@@ -773,7 +727,6 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
-
         {/* Modals for event creation */}
         {step === 'form' && (
           <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
