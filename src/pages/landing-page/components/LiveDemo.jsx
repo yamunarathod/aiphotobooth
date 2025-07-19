@@ -599,7 +599,7 @@ const LiveDemo = () => {
                   variant="primary"
                   size="lg"
                   onClick={!currentUser ? () => navigate('/login') : processImage}
-                  disabled={!uploadedImage || isProcessing || isLoadingTrials || (currentUser && hasNoTrials)}
+                  disabled={!currentUser ? false : (!uploadedImage || isProcessing || isLoadingTrials || hasNoTrials)}
                   iconName={isProcessing ? "Loader" : (currentUser && hasNoTrials) ? "Lock" : !currentUser ? "LogIn" : "Sparkles"}
                   iconPosition="left"
                   className={`w-full ${(currentUser && hasNoTrials)
