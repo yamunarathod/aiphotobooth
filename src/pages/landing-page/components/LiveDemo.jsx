@@ -633,7 +633,7 @@ const LiveDemo = () => {
                   {isProcessing ? (
                     <div className="text-center w-full flex flex-col items-center justify-center">
                       <div className="w-16 h-16 border-4 border-violet-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                      <p className="text-white mb-2">AI is working its ...</p>
+                      <p className="text-white mb-2">AI is working its ....</p>
                       <div className="w-48 bg-slate-600 rounded-full h-2 mb-2">
                         <div
                           className="bg-violet-500 h-2 rounded-full transition-all duration-300"
