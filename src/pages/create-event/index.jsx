@@ -23,9 +23,9 @@ const CreateEvent = () => {
     plan: 'Professional', // or 'Starter'
     maxStyles: 3, // 3 for Professional, 1 for Starter
     isActive: true,
-    planPrice: '₹149' // ₹149 for Professional, ₹49 for Starter
+    planPrice: '₹60' // ₹149 for Professional, ₹49 for Starter
   });
-
+ console.log('User Subscription>>>>>>>>>>>>>>>>>>>>>>>:', userSubscription.plan);
   const [formData, setFormData] = useState({
     eventName: '',
     startDate: '',
@@ -47,12 +47,12 @@ const CreateEvent = () => {
     { id: 4, title: 'License', icon: 'Shield' }
   ];
 
-  useEffect(() => {
-    // Check if user has active subscription
-    if (!userSubscription.isActive) {
-      navigate('/subscription-management');
-    }
-  }, [userSubscription, navigate]);
+  // useEffect(() => {
+  //   // Check if user has active subscription
+  //   if (!userSubscription.isActive) {
+  //     navigate('/subscription-management');
+  //   }
+  // }, [userSubscription, navigate]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;

@@ -21,6 +21,7 @@ const Dashboard = () => {
   // Loading and data states
   const [isLoading, setIsLoading] = useState(true);
   const [subscription, setSubscription] = useState(null);
+  console.log('User Subscription>>>>>>>>>>>>>>>>>>>>>>>:', subscription?.metadata?.planName);
   const [events, setEvents] = useState([]);
   const [totalAggregatedCreditsUsed, setTotalAggregatedCreditsUsed] = useState(0);
   const [totalImagesGenerated, setTotalImagesGenerated] = useState(0); // NEW: State for total images generated
@@ -250,7 +251,7 @@ const Dashboard = () => {
   // Determine max styles based on plan name from metadata
   const getMaxStyles = () => {
     switch (planName.toLowerCase()) {
-      case 'professional':
+      case 'pro':
         return 6;
       case 'starter':
         return 2;

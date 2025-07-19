@@ -41,24 +41,30 @@ const StyleSelector = ({
   ];
 
   const isStyleSelected = (styleId) => {
+    console.log(`Checking if style ${styleId} is selected`);
     return selectedStyles.includes(styleId);
   };
 
   const canSelectMoreStyles = () => {
+    console.log(`Checking if more styles can be selected. Current count: ${selectedStyles.length}, Max allowed: ${maxStyles}`);
     return selectedStyles.length < maxStyles;
   };
 
   const handleStyleClick = (styleId) => {
+    console.log(`Style clicked: ${styleId}`);
     if (isStyleSelected(styleId)) {
+      console.log(`Deselecting style: ${styleId}`);
       // Deselect style
       onStyleToggle(styleId, false);
     } else if (canSelectMoreStyles()) {
+      console.log(`Selecting style: ${styleId}`);
       // Select style
       onStyleToggle(styleId, true);
     }
   };
 
   const getSubscriptionBadgeColor = (plan) => {
+    console.log(`Getting badge color for plan: ${plan}`);
     switch (plan?.toLowerCase()) {
       case 'professional':
         return 'bg-primary/20 text-primary border-primary/30';
