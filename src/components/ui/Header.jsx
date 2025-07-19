@@ -28,8 +28,12 @@ const Header = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-violet-500 to-purple-600 rounded-lg flex items-center justify-center">
-              <Icon name="Sparkles" size={20} color="white" />
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden">
+              <img
+                src="/assets/images/logo.png"
+                alt="Photobooth AI Logo"
+                className="w-full h-full object-contain"
+              />
             </div>
             <div>
               <span className="text-xl font-bold text-white">Photobooth AI</span>
@@ -115,7 +119,7 @@ const Header = () => {
                   {link.name}
                 </a>
               ))}
-              
+
               <div className="pt-4 space-y-3">
                 {user ? (
                   <>
