@@ -90,8 +90,11 @@ const HeaderNavigation = () => {
               <div className="flex-shrink-0">
                 <div className="flex items-center space-x-2">
                   <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-                    <Icon name="Camera" size={20} color="white" />
-                  </div>
+                    <img
+                      src="/assets/images/logo.png"
+                      alt="Photobooth AI Logo"
+                      className="w-full h-full object-contain"
+                    />                  </div>
                   <span className="text-xl font-semibold text-gradient">
                     AI Photobooth
                   </span>
@@ -105,10 +108,9 @@ const HeaderNavigation = () => {
                 <div key={item.path} className="relative group">
                   <button
                     onClick={() => handleNavigation(item.path)}
-                    className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background ${
-                      isActiveRoute(item.path)
-                        ? 'text-primary bg-primary/10 border border-primary/20' :'text-text-primary hover:text-primary'
-                    }`}
+                    className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background ${isActiveRoute(item.path)
+                        ? 'text-primary bg-primary/10 border border-primary/20' : 'text-text-primary hover:text-primary'
+                      }`}
                     title={item.tooltip}
                   >
                     <Icon name={item.icon} size={18} />
@@ -123,10 +125,9 @@ const HeaderNavigation = () => {
                           <button
                             key={subItem.path}
                             onClick={() => handleNavigation(subItem.path)}
-                            className={`w-full flex items-center space-x-2 px-4 py-2 text-sm hover:bg-white/10 transition-colors duration-200 ${
-                              location.pathname === subItem.path
-                                ? 'text-primary bg-primary/10' :'text-text-primary hover:text-primary'
-                            }`}
+                            className={`w-full flex items-center space-x-2 px-4 py-2 text-sm hover:bg-white/10 transition-colors duration-200 ${location.pathname === subItem.path
+                                ? 'text-primary bg-primary/10' : 'text-text-primary hover:text-primary'
+                              }`}
                           >
                             <Icon name={subItem.icon} size={16} />
                             <span>{subItem.label}</span>
@@ -207,10 +208,9 @@ const HeaderNavigation = () => {
                     <div key={item.path}>
                       <button
                         onClick={() => handleNavigation(item.path)}
-                        className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-all duration-200 hover:bg-white/10 ${
-                          isActiveRoute(item.path)
-                            ? 'text-primary bg-primary/10 border border-primary/20' :'text-text-primary hover:text-primary'
-                        }`}
+                        className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-all duration-200 hover:bg-white/10 ${isActiveRoute(item.path)
+                            ? 'text-primary bg-primary/10 border border-primary/20' : 'text-text-primary hover:text-primary'
+                          }`}
                       >
                         <Icon name={item.icon} size={20} />
                         <span className="font-medium">{item.label}</span>
@@ -223,10 +223,9 @@ const HeaderNavigation = () => {
                             <button
                               key={subItem.path}
                               onClick={() => handleNavigation(subItem.path)}
-                              className={`w-full flex items-center space-x-3 px-4 py-2 rounded-lg text-left text-sm transition-colors duration-200 hover:bg-white/10 ${
-                                location.pathname === subItem.path
-                                  ? 'text-primary bg-primary/10' :'text-text-secondary hover:text-primary'
-                              }`}
+                              className={`w-full flex items-center space-x-3 px-4 py-2 rounded-lg text-left text-sm transition-colors duration-200 hover:bg-white/10 ${location.pathname === subItem.path
+                                  ? 'text-primary bg-primary/10' : 'text-text-secondary hover:text-primary'
+                                }`}
                             >
                               <Icon name={subItem.icon} size={16} />
                               <span>{subItem.label}</span>

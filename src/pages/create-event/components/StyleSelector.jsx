@@ -195,8 +195,11 @@ const StyleSelector = ({
       {subscriptionPlan === 'Starter' && (
         <div className="glass rounded-lg p-4 border border-accent/30 bg-accent/5">
           <div className="flex items-start space-x-3">
-            <Icon name="Sparkles" size={20} className="text-accent mt-0.5" />
-            <div className="flex-1">
+ <img
+                src="/assets/images/logo.png"
+                alt="Photobooth AI Logo"
+                className="w-full h-full object-contain"
+              />            <div className="flex-1">
               <h4 className="font-medium text-text-primary mb-1">Want More Styles?</h4>
               <p className="text-sm text-text-secondary mb-3">
                 Upgrade to Professional plan to unlock all 6 AI styles and create more diverse photobooth experiences.

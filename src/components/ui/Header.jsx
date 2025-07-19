@@ -36,7 +36,7 @@ const Header = () => {
               />
             </div>
             <div>
-              <span className="text-xl font-bold text-white">Photobooth AI</span>
+              <span className="text-xl font-bold text-white">AI Photobooth</span>
             </div>
           </Link>
 

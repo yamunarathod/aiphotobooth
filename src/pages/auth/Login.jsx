@@ -47,9 +47,12 @@ const Login = () => {
         {/* Logo */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center space-x-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-violet-500 to-purple-600 rounded-lg flex items-center justify-center">
-              <Icon name="Sparkles" size={24} color="white" />
-            </div>
+            <div className="w-12 h-12  rounded-lg flex items-center justify-center">
+ <img
+                src="/assets/images/logo.png"
+                alt="Photobooth AI Logo"
+                className="w-full h-full object-contain"
+              />            </div>
             <div>
               <h1 className="text-2xl font-bold text-white">AI Photobooth</h1>
               <p className="text-sm text-slate-400">AI-Powered Event Photography</p>

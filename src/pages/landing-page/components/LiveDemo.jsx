@@ -399,8 +399,12 @@ const LiveDemo = () => {
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-8 border border-violet-500/30 max-w-md w-full">
         <div className="text-center mb-6">
-          <div className="w-16 h-16 bg-gradient-to-br from-violet-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Icon name="Sparkles" size={32} color="white" />
+          <div className="w-16 h-16  rounded-full flex items-center justify-center mx-auto mb-4">
+        <img
+                src="/assets/images/logo.png"
+                alt="Photobooth AI Logo"
+                className="w-full h-full object-contain"
+              />
           </div>
           <h3 className="text-2xl font-bold text-white mb-2">
             {currentUser ? 'Trial Limit Reached' : 'Sign In to Continue'}
