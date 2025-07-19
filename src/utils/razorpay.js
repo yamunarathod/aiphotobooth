@@ -56,7 +56,7 @@ export const makeRazorpayPayment = async ({
 
   try {
     // Step 1: Request order creation from your backend
-    const createOrderResponse = await fetch('http://localhost:5000/api/create-order', {
+    const createOrderResponse = await fetch('https://squid-app-2-33ryj.ondigitalocean.app/api/create-order', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -102,7 +102,7 @@ export const makeRazorpayPayment = async ({
           console.log('RAZORPAY HANDLER: Payment success response from Razorpay:', response);
 
           // Step 2: Send payment success details to your Node.js backend for verification
-          const verificationResponse = await fetch('http://localhost:5000/api/verify-payment', {
+          const verificationResponse = await fetch('https://squid-app-2-33ryj.ondigitalocean.app/api/verify-payment', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json'
