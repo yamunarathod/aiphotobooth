@@ -5,7 +5,7 @@ import Image from '../../../components/AppImage';
 import { v4 as uuidv4 } from 'uuid';
 import { supabase } from '../../../utils/supabase';
 import { useAuth } from '../../../contexts/AuthContext';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const LiveDemo = () => {
   const [uploadedImage, setUploadedImage] = useState(null);
@@ -19,6 +19,7 @@ const LiveDemo = () => {
   const [showSubscribePrompt, setShowSubscribePrompt] = useState(false);
   const fileInputRef = useRef(null);
   const { user: currentUser, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
 
   const styles = [
     { id: 'ghibli', name: 'Ghibli', color: 'emerald' },
@@ -597,21 +598,21 @@ const LiveDemo = () => {
                 <Button
                   variant="primary"
                   size="lg"
-                  onClick={processImage}
-                  disabled={!uploadedImage || isProcessing || isLoadingTrials || hasNoTrials}
-                  iconName={isProcessing ? "Loader" : hasNoTrials ? "Lock" : "Sparkles"}
+                  onClick={!currentUser ? () => navigate('/login') : processImage}
+                  disabled={!uploadedImage || isProcessing || isLoadingTrials || (currentUser && hasNoTrials)}
+                  iconName={isProcessing ? "Loader" : (currentUser && hasNoTrials) ? "Lock" : !currentUser ? "LogIn" : "Sparkles"}
                   iconPosition="left"
-                  className={`w-full ${hasNoTrials
+                  className={`w-full ${(currentUser && hasNoTrials)
                     ? "bg-gradient-to-r from-slate-600 to-slate-700"
                     : "bg-gradient-to-r from-violet-500 to-purple-600"
                     }`}
                 >
                   {isProcessing ? 'Transforming...' :
-                    authLoading ? 'Loading User Data...' : // <--- Updated text for auth loading
-                      isLoadingTrials ? 'Loading Trials...' : // <--- Specific text for trials loading
-                        hasNoTrials ? 'Subscribe to Transform More' :
-                          currentUser ? `Transform with AI (${trialsLeft} trial${trialsLeft === 1 ? '' : 's'} left)` :
-                            'Transform with AI (Sign in to get trials)'}
+                    authLoading ? 'Loading User Data...' :
+                      isLoadingTrials ? 'Loading Trials...' :
+                        !currentUser ? 'Sign In to Continue' :
+                          hasNoTrials ? 'Subscribe to Transform More' :
+                            `Transform (${trialsLeft} trial${trialsLeft === 1 ? '' : 's'} left)`}
                 </Button>
               </div>
 
