@@ -113,6 +113,8 @@ const plans = [
     const name = getUserDisplayName()
     const email = getUserEmail()
     const baseAmount = calculatePrice(plan) * getEventSizeMultiplier()
+  //     const amountFor1Rupee = 1 / 83.5; 
+  // const baseAmount = amountFor1Rupee;
 
     // Get the correct database user ID
     const databaseUserId = getDatabaseUserId()
