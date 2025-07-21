@@ -1,20 +1,36 @@
-import { Sparkles, Mail, Phone, MapPin } from "lucide-react"
+import { Sparkles, Mail, Phone, MapPin, X, Youtube, Instagram, Linkedin } from "lucide-react"
 
 const Footer = () => {
   const currentYear = new Date().getFullYear()
 
   const socialLinks = [
-    { name: "Twitter", href: "https://twitter.com/photobooth" },
-    { name: "Facebook", href: "https://facebook.com/photobooth" },
-    { name: "Instagram", href: "https://instagram.com/photobooth" },
-    { name: "LinkedIn", href: "https://linkedin.com/company/photobooth" },
+    { 
+      name: "X (Twitter)", 
+      href: "https://x.com/craftech360", 
+      icon: X,
+      color: "hover:bg-gray-900"
+    },
+    { 
+      name: "YouTube", 
+      href: "https://www.youtube.com/watch?v=ptsb6EsFN0U", 
+      icon: Youtube,
+      color: "hover:bg-red-600"
+    },
+    { 
+      name: "Instagram", 
+      href: "https://www.instagram.com/craftech360?igsh=Yzc5dGNodjV6dWpr&utm_source=qr", 
+      icon: Instagram,
+      color: "hover:bg-gradient-to-r hover:from-purple-500 hover:to-pink-500"
+    },
+    { 
+      name: "LinkedIn", 
+      href: "https://in.linkedin.com/company/craftech360", 
+      icon: Linkedin,
+      color: "hover:bg-blue-700"
+    },
   ]
 
-  const legalLinks = [
-    { name: "Privacy Policy", href: "/privacy" },
-    { name: "Terms of Service", href: "/terms" },
-  ]
-
+ 
   return (
     <footer className="bg-gradient-to-b from-[#0f0f23] to-[#0a0a1a] border-t border-slate-800">
       <div className="container mx-auto px-6">
@@ -24,11 +40,15 @@ const Footer = () => {
             {/* Company Info */}
             <div>
               <div className="flex items-center space-x-3 mb-6">
-                <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-600 rounded-lg flex items-center justify-center">
-                  <Sparkles size={24} color="white" />
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden">
+                  <img
+                    src="/assets/images/logo.png"
+                    alt="Photobooth AI Logo"
+                    className="w-full h-full object-contain"
+                  />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-white"> Photobooth AI</h3>
+                  <h3 className="text-xl font-bold text-white">AI Photobooth</h3>
                   <p className="text-sm text-slate-400">AI-Powered Event Photography</p>
                 </div>
               </div>
@@ -66,16 +86,21 @@ const Footer = () => {
 
               {/* Social Links */}
               <div className="flex space-x-3">
-                {socialLinks.map((social) => (
-                  <a
-                    key={social.name}
-                    href={social.href}
-                    className="w-9 h-9 bg-slate-800 hover:bg-violet-500 rounded-lg flex items-center justify-center transition-colors duration-300 text-slate-400 hover:text-white text-sm"
-                    aria-label={social.name}
-                  >
-                    {social.name.charAt(0)}
-                  </a>
-                ))}
+                {socialLinks.map((social) => {
+                  const IconComponent = social.icon
+                  return (
+                    <a
+                      key={social.name}
+                      href={social.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`w-10 h-10 bg-slate-800 ${social.color} rounded-lg flex items-center justify-center transition-all duration-300 text-slate-400 hover:text-white group`}
+                      aria-label={social.name}
+                    >
+                      <IconComponent size={18} />
+                    </a>
+                  )
+                })}
               </div>
             </div>
           </div>
@@ -85,19 +110,7 @@ const Footer = () => {
         <div className="py-6 border-t border-slate-800">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="text-slate-400 text-sm mb-4 md:mb-0">
-              © {currentYear}  Photobooth AI. All rights reserved.
-            </div>
-
-            <div className="flex gap-6">
-              {legalLinks.map((link) => (
-                <a
-                  key={link.name}
-                  href={link.href}
-                  className="text-slate-400 hover:text-violet-400 transition-colors duration-300 text-sm"
-                >
-                  {link.name}
-                </a>
-              ))}
+              © {currentYear} AI Photobooth. All rights reserved.
             </div>
           </div>
         </div>

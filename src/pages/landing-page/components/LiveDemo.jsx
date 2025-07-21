@@ -28,6 +28,14 @@ const LiveDemo = () => {
     { id: 'package', name: 'Package', color: 'rose' }
   ];
 
+
+  const handleFreeTrial = () => {
+    router.push('/subscription');
+  };
+
+  const handleBookDemo = () => {
+    window.open('https://wa.me/919964299111', '_blank');
+  };
   const sampleImages = [
     "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=300&fit=crop&crop=face",
     "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=300&h=300&fit=crop&crop=face",
@@ -217,9 +225,9 @@ const LiveDemo = () => {
       console.log('Current trials left before decrement:', trialsLeft);
 
       // Call the correct RPC function
-       const { data: newCount, error: rpcError } = await supabase.rpc('generate_image_and_deduct_trial', {
+      const { data: newCount, error: rpcError } = await supabase.rpc('generate_image_and_deduct_trial', {
         p_user_id: currentUser.id // <--- Change to the correct parameter name
-    });
+      });
 
       console.log('RPC call completed:');
       console.log('- New count:', newCount);
@@ -283,7 +291,7 @@ const LiveDemo = () => {
         throw new Error(`Workflow JSON not found: ${workflowResponse.statusText}`);
       }
       const workflow = await workflowResponse.json();
-      
+
 
       // Update node 283 with UUID
       workflow['283'].inputs.unique_id = uuid;
@@ -401,11 +409,11 @@ const LiveDemo = () => {
       <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-8 border border-violet-500/30 max-w-md w-full">
         <div className="text-center mb-6">
           <div className="w-16 h-16  rounded-full flex items-center justify-center mx-auto mb-4">
-        <img
-                src="/assets/images/logo.png"
-                alt="Photobooth AI Logo"
-                className="w-full h-full object-contain"
-              />
+            <img
+              src="/assets/images/logo.png"
+              alt="Photobooth AI Logo"
+              className="w-full h-full object-contain"
+            />
           </div>
           <h3 className="text-2xl font-bold text-white mb-2">
             {currentUser ? 'Trial Limit Reached' : 'Sign In to Continue'}
@@ -716,21 +724,14 @@ const LiveDemo = () => {
                 Start your free trial and transform unlimited photos for your next event
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button
-                  variant="primary"
-                  size="lg"
-                  iconName="Sparkles"
-                  iconPosition="left"
-                  className="bg-gradient-to-r from-violet-500 to-purple-600"
-                >
-                  Start Free Trial - 50 Transforms
-                </Button>
+            
                 <Button
                   variant="outline"
                   size="lg"
                   iconName="Calendar"
                   iconPosition="left"
                   className="border-violet-400 text-violet-400"
+                  onClick={handleBookDemo}
                 >
                   Book Live Demo
                 </Button>

@@ -23,6 +23,8 @@ const TemplateGallery = () => {
       images: [
         "https://res.cloudinary.com/dk1xqwr3g/image/upload/v1751371140/image_20250627_121040_f4crjc.png",
         "https://res.cloudinary.com/dk1xqwr3g/image/upload/v1751373008/image_20250621_154501_q3uj8c.png",
+        "https://res.cloudinary.com/dk1xqwr3g/image/upload/v1753100366/ai-transformed-ghibli_1_hf9f2t.png"
+
 
       ],
     },
@@ -179,43 +181,7 @@ const TemplateGallery = () => {
 
    
 
-        {/* Custom Style CTA */}
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="bg-gradient-to-r from-violet-500/20 to-purple-500/20 rounded-3xl p-8 border border-violet-500/30 text-center backdrop-blur-sm"
-        >
-          <motion.div
-            animate={{ rotate: [0, 5, -5, 0] }}
-            transition={{ duration: 4, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
-          >
-            <Palette size={48} className="text-violet-400 mx-auto mb-4" />
-          </motion.div>
-          <h3 className="text-2xl font-bold text-white mb-4">Need a Custom Style?</h3>
-          <p className="text-slate-300 mb-6 max-w-2xl mx-auto">
-            Our AI artists can create bespoke styles tailored to your brand, event theme, or creative vision. From
-            Ghibli  to unique artistic concepts.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white py-3 px-6 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
-            >
-              <MessageCircle size={20} />
-              Request Custom Style
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="border-2 border-violet-400 text-violet-400 hover:bg-violet-500/10 py-3 px-6 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-2"
-            >
-              <Eye size={20} />
-              View Custom Examples
-            </motion.button>
-          </div>
-        </motion.div>
+    
       </div>
     </section>
   )
