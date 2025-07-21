@@ -718,15 +718,7 @@ const Dashboard = () => {
                 >
                   Start New Event
                 </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full border-slate-600 text-slate-300"
-                  iconName="Palette"
-                  iconPosition="left"
-                >
-                  Browse Styles
-                </Button>
+             
               </div>
             </div>
           </div>

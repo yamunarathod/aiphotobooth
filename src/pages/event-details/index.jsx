@@ -246,19 +246,7 @@ const EventDetails = () => {
     }
 
     try {
-      const content = `
-Photobooth License File
-
-Event: ${eventDetails.event_name}
-Date: ${eventDetails.start_date} to ${eventDetails.end_date}
-Styles: ${(eventDetails.selected_styles || []).join(', ')}
-
---- LICENSE KEY BEGIN ---
-${eventDetails.license_key}
---- LICENSE KEY END ---
-
-Generated on: ${new Date(eventDetails.license_generated_at).toLocaleString()}
-      `.trim();
+      const content = `${eventDetails.license_key}`.trim();
 
       const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
       const filename = `License_${eventDetails.event_name.replace(/[^a-zA-Z0-9]/g, '_')}_${eventDetails.start_date}.txt`;

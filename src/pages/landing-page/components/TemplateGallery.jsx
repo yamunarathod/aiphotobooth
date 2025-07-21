@@ -95,7 +95,7 @@ const TemplateGallery = () => {
       : allTemplateImages.filter((item) => item.category === activeCategory)
 
   return (
-    <section className="py-20 bg-gradient-to-b from-[#0f0f23] to-[#1a1a2e] min-h-screen">
+    <section id="styles" className="py-20 bg-gradient-to-b from-[#0f0f23] to-[#1a1a2e] min-h-screen">
       <div className="container mx-auto px-6">
         <div className="text-center mb-16">
           <motion.h2

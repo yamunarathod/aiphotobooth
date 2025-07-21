@@ -22,7 +22,6 @@ const PricingSection = () => {
         'Email support',
         'Social media sharing',
         'HD quality exports',
-        'Mobile app access'
       ],
       limitations: [
         'No custom branding',

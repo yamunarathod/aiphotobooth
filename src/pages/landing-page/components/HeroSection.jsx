@@ -72,13 +72,7 @@ const HeroSection = () => {
                 <Sparkles size={20} />
                 Buy Now - Start Creating
               </button>
-              <button
-                className="border-2 border-violet-400 text-violet-400 hover:bg-violet-500/10 px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2"
-                onClick={() => setShowVideo(true)}
-              >
-                <Play size={20} />
-                Watch Demo
-              </button>
+         
             </div>
           </div>
 

@@ -53,7 +53,6 @@ const plans = [
         "Basic face swap style",
         "HD quality downloads",
         "Email support",
-        "Mobile app access",
         "Basic photo editing",
         "Credits roll over monthly",
       ],
