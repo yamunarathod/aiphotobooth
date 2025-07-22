@@ -82,7 +82,7 @@ const Header = () => {
                   to="/login"
                   className="text-slate-300 hover:text-white transition-colors font-medium"
                 >
-                  Sign In
+                  Sign Up
                 </Link>
                 <Button
                   onClick={() => navigate('/subscription')}
