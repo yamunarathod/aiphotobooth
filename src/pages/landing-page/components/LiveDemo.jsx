@@ -5,6 +5,7 @@ import Image from '../../../components/AppImage';
 import { v4 as uuidv4 } from 'uuid';
 import { supabase } from '../../../utils/supabase';
 import { useAuth } from '../../../contexts/AuthContext';
+import { useTransformation } from '../../../contexts/TransformationContext';
 import { Link, useNavigate } from 'react-router-dom';
 
 const LiveDemo = () => {
@@ -20,6 +21,7 @@ const LiveDemo = () => {
   const fileInputRef = useRef(null);
   const { user: currentUser, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const { addTransformation, activeTransformations, checkTransformationStatus, removeTransformation } = useTransformation();
 
   const styles = [
     { id: 'ghibli', name: 'Ghibli', color: 'emerald' },
@@ -160,6 +162,59 @@ const LiveDemo = () => {
       console.error('Error processing sample image:', error);
     }
   };
+  // Check for active transformations on mount
+  useEffect(() => {
+    if (activeTransformations.length > 0) {
+      const latestTransformation = activeTransformations[activeTransformations.length - 1];
+      
+      // Resume checking the status
+      const resumeChecking = async () => {
+        const result = await checkTransformationStatus(
+          latestTransformation.jobId,
+          latestTransformation.uuid,
+          import.meta.env.VITE_RUNPOD_API_KEY
+        );
+        
+        if (result.status === 'completed') {
+          setProcessedImage(result.processedImage);
+          setUploadedImage(latestTransformation.uploadedImage);
+          setSelectedStyle(latestTransformation.selectedStyle);
+          removeTransformation(latestTransformation.jobId);
+        } else if (result.status === 'processing') {
+          setIsProcessing(true);
+          setProgress(result.progress || 0);
+          setUploadedImage(latestTransformation.uploadedImage);
+          setSelectedStyle(latestTransformation.selectedStyle);
+          setUuid(latestTransformation.uuid);
+          
+          // Continue polling
+          const checkInterval = setInterval(async () => {
+            const checkResult = await checkTransformationStatus(
+              latestTransformation.jobId,
+              latestTransformation.uuid,
+              import.meta.env.VITE_RUNPOD_API_KEY
+            );
+            
+            if (checkResult.status === 'completed') {
+              setProcessedImage(checkResult.processedImage);
+              setIsProcessing(false);
+              removeTransformation(latestTransformation.jobId);
+              clearInterval(checkInterval);
+            } else if (checkResult.status === 'failed') {
+              setIsProcessing(false);
+              removeTransformation(latestTransformation.jobId);
+              clearInterval(checkInterval);
+            } else {
+              setProgress(checkResult.progress || 0);
+            }
+          }, 2000);
+        }
+      };
+      
+      resumeChecking();
+    }
+  }, []);
+  
   useEffect(() => {
     const fetchTrialCount = async () => {
       if (!authLoading && currentUser?.id) {
@@ -311,63 +366,43 @@ const LiveDemo = () => {
       const jobId = result.id;
 
       console.log('RunPod job started with ID:', jobId);
+      
+      // Add transformation to global state
+      addTransformation({
+        jobId,
+        uuid,
+        selectedStyle,
+        uploadedImage,
+        progress: 0
+      });
 
       // Poll for job completion
       const checkStatus = async () => {
-        try {
-          const statusResponse = await fetch(`https://api.runpod.ai/v2/tdme3jq4u7zg1s/status/${jobId}`, {
-            headers: {
-              'Authorization': `Bearer ${import.meta.env.VITE_RUNPOD_API_KEY}`
-            }
-          });
-          const statusData = await statusResponse.json();
-
-          console.log('Job status:', statusData.status);
-
-          if (statusData.status === 'COMPLETED') {
-            console.log('Job completed, fetching result from Supabase...');
-
-            // Fetch output from Supabase
-            const { data, error } = await supabase
-              .from('inputimagetable')
-              .select('output')
-              .eq('unique_id', uuid)
-              .single();
-
-            if (!error && data && data.output) {
-              console.log('Successfully fetched processed image from Supabase');
-              setProcessedImage(data.output);
-
-              // Decrement trial count ONLY after successful processing
-              // Removed 'userid' argument here
-              const decrementSuccess = await decrementTrialCount(); // <--- CHANGE HERE
-              console.log('Decrement trial count result:', decrementSuccess);
-              if (decrementSuccess) {
-                console.log('Trial count successfully decremented');
-              } else {
-                console.warn('Failed to decrement trial count, but image was processed');
-              }
-            } else {
-              console.error('Error fetching processed image:', error);
-            }
-
-            setIsProcessing(false);
-            clearInterval(statusInterval);
-
-          } else if (statusData.status === 'FAILED') {
-            console.error('Processing failed:', statusData);
-            setIsProcessing(false);
-            clearInterval(statusInterval);
+        const result = await checkTransformationStatus(jobId, uuid, import.meta.env.VITE_RUNPOD_API_KEY);
+        
+        if (result.status === 'completed') {
+          console.log('Job completed, image processed');
+          setProcessedImage(result.processedImage);
+          
+          // Decrement trial count ONLY after successful processing
+          const decrementSuccess = await decrementTrialCount();
+          console.log('Decrement trial count result:', decrementSuccess);
+          if (decrementSuccess) {
+            console.log('Trial count successfully decremented');
           } else {
-            // Update progress based on status
-            if (statusData.status === 'IN_PROGRESS') {
-              setProgress(prev => Math.min(prev + 10, 90));
-            } else if (statusData.status === 'IN_QUEUE') {
-              setProgress(10);
-            }
+            console.warn('Failed to decrement trial count, but image was processed');
           }
-        } catch (error) {
-          console.error('Error checking job status:', error);
+          
+          setIsProcessing(false);
+          removeTransformation(jobId);
+          clearInterval(statusInterval);
+        } else if (result.status === 'failed') {
+          console.error('Processing failed');
+          setIsProcessing(false);
+          removeTransformation(jobId);
+          clearInterval(statusInterval);
+        } else if (result.status === 'processing') {
+          setProgress(result.progress || 0);
         }
       };
 

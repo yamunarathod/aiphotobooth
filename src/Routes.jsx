@@ -3,6 +3,8 @@ import { BrowserRouter, Routes as RouterRoutes, Route } from "react-router-dom";
 import ScrollToTop from "components/ScrollToTop";
 import ErrorBoundary from "components/ErrorBoundary";
 import { AuthProvider } from "contexts/AuthContext";
+import { TransformationProvider } from "contexts/TransformationContext";
+import TransformationIndicator from "components/ui/TransformationIndicator";
 import LandingPage from "pages/landing-page";
 import Login from "pages/auth/Login";
 import Signup from "pages/auth/Signup";
@@ -68,9 +70,11 @@ const Routes = () => {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <ErrorBoundary>
-          <ScrollToTop />
-          <RouterRoutes>
+        <TransformationProvider>
+          <ErrorBoundary>
+            <ScrollToTop />
+            <TransformationIndicator />
+            <RouterRoutes>
             {/* Public routes */}
             <Route path="/" element={<LandingPage />} />
             <Route path="/landing-page" element={<LandingPage />} />
@@ -124,6 +128,7 @@ const Routes = () => {
             <Route path="*" element={<NotFound />} />
           </RouterRoutes>
         </ErrorBoundary>
+        </TransformationProvider>
       </AuthProvider>
     </BrowserRouter>
   );
